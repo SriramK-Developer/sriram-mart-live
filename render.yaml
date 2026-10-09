@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: srirammart
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: DATABASE_URL
+        fromDatabase:
+          name: srirammart-postgres
+          property: connectionString
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: Admin@123
+      - key: REMEMBER_ME_KEY
+        generateValue: true
+
+databases:
+  - name: srirammart-postgres
+    plan: free
+    region: oregon
+    databaseName: srirammart
+    user: srirammart_user

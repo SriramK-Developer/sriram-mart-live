@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-package"/></svg><div><h1>My Products</h1><p>Edit details, update stock, or hide a product from shoppers.</p></div>
+      <a class="btn btn-primary" style="margin-left:auto" th:href="@{/seller/products/new}"><svg class="icon sm"><use href="#i-plus"/></svg>Add product</a></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="p : ${items}">
+          <td><img class="thumb" th:src="@{${p.imageMain}}" alt=""></td>
+          <td><a th:href="@{/product/{id}(id=${p.id})}" th:text="${p.name}">Name</a><div class="muted small" th:text="${p.sku}">sku</div></td>
+          <td th:text="${p.category.name}">Cat</td>
+          <td><b th:text="${@fmt.inr(p.price)}">₹1</b><div class="muted small" th:if="${p.discountPercent gt 0}" th:text="'MRP ' + ${@fmt.inr(p.mrp)}">MRP</div></td>
+          <td><form class="inline" th:action="@{/seller/products/{id}/stock(id=${p.id})}" method="post"><input type="number" name="stock" th:value="${p.stock}" min="0" max="1000000" aria-label="Stock"><button class="btn btn-outline btn-sm" type="submit">Update</button></form></td>
+          <td><span class="tag green" th:if="${p.active}">Live</span><span class="tag gray" th:unless="${p.active}">Hidden</span></td>
+          <td class="right"><a class="btn btn-outline btn-sm" th:href="@{/seller/products/{id}/edit(id=${p.id})}">Edit</a>
+            <form class="inline" th:action="@{/seller/products/{id}/toggle(id=${p.id})}" method="post"><button class="btn btn-sm" th:classappend="${p.active} ? 'btn-danger' : 'btn-primary'" type="submit" th:text="${p.active} ? 'Hide' : 'Show'">Hide</button></form></td>
+        </tr>
+      </tbody></table></div>
+    <div class="empty mt" th:if="${items.isEmpty()}"><h3>No products yet</h3><p>Add your first product to start selling.</p><a class="btn btn-primary" th:href="@{/seller/products/new}">Add product</a></div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-shield"/></svg><div><h1>Admin Dashboard</h1><p>Platform overview across all buyers, sellers and orders.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="kpis">
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-rupee"/></svg></span><div><small>Revenue</small><b th:text="${@fmt.inr(revenue)}">₹0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-clipboard"/></svg></span><div><small>Orders</small><b th:text="${orderCount}">0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-users"/></svg></span><div><small>Buyers</small><b th:text="${buyerCount}">0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-store"/></svg></span><div><small>Sellers</small><b th:text="${sellerCount}">0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-package"/></svg></span><div><small>Live products</small><b th:text="${productCount}">0</b></div></div>
+    </div>
+
+    <div class="card pad mb" th:if="${!pendingSellers.isEmpty()}">
+      <h3 style="margin-bottom:10px">Sellers waiting for approval</h3>
+      <div class="mini-list"><div class="it" th:each="s : ${pendingSellers}"><div class="grow"><b th:text="${s.storeName != null ? s.storeName : s.fullName}">Store</b><small class="muted" th:text="${s.email}">email</small></div>
+        <form th:action="@{/admin/users/{id}/approve(id=${s.id})}" method="post"><button class="btn btn-primary btn-sm" type="submit">Approve</button></form></div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card pad"><h3>Revenue – last 14 days</h3>
+        <div class="chart"><div class="col" th:each="b : ${revenueBars}"><div class="bar" th:style="'height:' + ${b.pct} + '%'" th:title="${b.label + ': ' + @fmt.inr(b.value)}"></div><small th:text="${b.label}">18 Sep</small></div></div></div>
+      <div class="card pad"><h3 style="margin-bottom:12px">Orders by status</h3>
+        <div class="mini-list"><div class="it" th:each="e : ${statusCounts.entrySet()}"><div class="grow" th:text="${e.key}">Placed</div><b th:text="${e.value}">3</b></div></div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card pad"><h3 style="margin-bottom:12px">Sales by category (30 days)</h3>
+        <div class="hbars"><div class="r" th:each="b : ${categoryBars}"><span th:text="${b.label}">Category</span><span class="t"><i th:style="'width:' + ${b.pct} + '%'"></i></span><b class="right" th:text="${@fmt.inr(b.value)}">₹1</b></div></div>
+        <p class="muted" th:if="${categoryBars.isEmpty()}">No sales in the last 30 days.</p></div>
+      <div class="card pad"><h3 style="margin-bottom:8px">Top selling products</h3>
+        <div class="mini-list"><div class="it" th:each="p : ${topProducts}"><img th:src="@{${p.imageMain}}" alt=""><div class="grow"><b th:text="${p.name}">Name</b><small class="muted" th:text="${p.soldCount} + ' sold'">1</small></div></div></div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card pad"><h3 style="margin-bottom:8px">Recent orders</h3>
+        <div class="tbl-wrap" style="border:0"><table class="tbl"><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>
+          <tr th:each="o : ${recentOrders}"><td th:text="${o.orderNo}">SM1</td><td th:text="${o.user.fullName}">Name</td><td th:text="${@fmt.inr(o.total)}">₹1</td><td><span class="tag gray" th:text="${o.status.label}">Placed</span></td></tr>
+        </tbody></table></div><a th:href="@{/admin/orders}">All orders →</a></div>
+      <div class="card pad"><h3 style="margin-bottom:8px">Low stock</h3>
+        <div class="mini-list"><div class="it" th:each="p : ${lowStock}"><img th:src="@{${p.imageMain}}" alt=""><div class="grow"><b th:text="${p.name}">Name</b><small class="muted" th:text="${p.seller.storeName}">Store</small></div><span class="tag orange" th:text="${p.stock} + ' left'">3</span></div></div>
+        <p class="muted" th:if="${lowStock.isEmpty()}">Nothing is running low.</p></div>
+    </div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

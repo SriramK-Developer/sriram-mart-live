@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main" data-wishlist-page>
+    <div class="page-head"><svg class="icon lg" style="color:var(--blue)"><use href="#i-heart"/></svg><div><h1>My Wishlist</h1><p>Your favorite items, saved for later</p></div>
+      <form th:action="@{/wishlist/clear}" method="post" style="margin-left:auto" th:if="${!items.isEmpty()}"><button type="submit" class="btn btn-outline btn-sm" data-confirm="Remove everything from your wishlist?"><svg class="icon sm"><use href="#i-trash"/></svg>Clear Wishlist</button></form>
+    </div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="empty" th:if="${items.isEmpty()}"><h3>Your wishlist is empty</h3><p>Tap the heart on any product to save it here.</p><a class="btn btn-primary" th:href="@{/deals}">Explore deals</a></div>
+    <div class="pgrid" th:if="${!items.isEmpty()}">
+      <th:block th:each="w : ${items}"><th:block th:replace="~{fragments/layout :: productCard(${w.product})}"></th:block></th:block>
+    </div>
+  </main>
+  <aside class="rail">
+    <div class="card panel rail-card">
+      <h3 style="color:var(--blue)">Save for Later</h3>
+      <p class="muted">Keep track of your favorite items and never miss a deal!</p>
+      <a class="btn btn-primary btn-sm" th:href="@{/deals}">Explore Deals <svg class="icon sm"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    <div class="card rail-card">
+      <h3>Wishlist Summary</h3>
+      <div class="wl-total"><span class="muted">Total Items</span><b th:text="${items.size()}">8</b></div>
+      <div class="wl-total"><span class="muted">Estimated Value</span><b th:text="${@fmt.inr(total)}">₹77,276</b></div>
+      <p class="muted small">Items in your wishlist are not reserved. Prices may change.</p>
+    </div>
+  </aside>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

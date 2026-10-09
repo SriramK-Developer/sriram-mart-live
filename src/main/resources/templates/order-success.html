@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="card success">
+      <div class="ok"><svg class="icon"><use href="#i-check"/></svg></div>
+      <h1>Thank you! Your order is placed.</h1>
+      <p class="muted">Order <b th:text="'#' + ${order.orderNo}">#SM123456</b> · Total <b th:text="${@fmt.inr(order.total)}">₹1,299</b> · <span th:text="${order.paymentMethod.label}">Cash on Delivery</span></p>
+      <p>Expected delivery by <b th:text="${@fmt.day(order.expectedDelivery)}">Fri, 25 Sep</b> to <span th:text="${order.shipCity} + ' - ' + ${order.shipPincode}">Chennai</span></p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:18px">
+        <a class="btn btn-primary" th:href="@{/orders/{no}(no=${order.orderNo})}">View order</a>
+        <a class="btn btn-outline" th:href="@{/}">Continue shopping</a>
+      </div>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

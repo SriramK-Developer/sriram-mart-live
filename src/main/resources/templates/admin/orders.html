@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-clipboard"/></svg><div><h1>Orders</h1><p>The 100 most recent orders. Every purchase is stored in the database automatically.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Update</th></tr></thead><tbody>
+      <tr th:each="o : ${list}">
+        <td><b th:text="${o.orderNo}">SM1</b></td><td th:text="${@fmt.dateTime(o.createdAt)}">date</td>
+        <td><span th:text="${o.user.fullName}">Name</span><br><small class="muted" th:text="${o.shipCity}">City</small></td>
+        <td th:text="${o.itemCount}">1</td><td th:text="${@fmt.inr(o.total)}">₹1</td>
+        <td><span th:text="${o.paymentMethod.label}">COD</span><br><span class="tag" th:classappend="${o.paymentStatus.name() == 'PAID'} ? 'green' : (${o.paymentStatus.name() == 'REFUNDED'} ? 'purple' : 'orange')" th:text="${o.paymentStatus.name().toLowerCase()}">pending</span></td>
+        <td><span class="tag" th:classappend="${o.status.name() == 'DELIVERED'} ? 'green' : (${o.status.name() == 'CANCELLED'} ? 'red' : 'orange')" th:text="${o.status.label}">Placed</span></td>
+        <td><form class="inline" th:if="${!o.status.isFinal()}" th:action="@{/admin/orders/{no}/status(no=${o.orderNo})}" method="post"><select name="status" aria-label="New status"><option th:each="s : ${statuses}" th:if="${s.ordinal() gt o.status.ordinal() or s.name() == 'CANCELLED'}" th:value="${s.name()}" th:text="${s.label}">Shipped</option></select><button class="btn btn-primary btn-sm" type="submit">Save</button></form><span class="muted small" th:if="${o.status.isFinal()}">—</span></td>
+      </tr>
+    </tbody></table></div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <section class="hero">
+      <div class="copy">
+        <div class="eyebrow">Upgrade your lifestyle</div>
+        <h1>Top Brands<br><em>Best Deals</em></h1>
+        <p>From gadgets to fashion, home to sports — find everything you need, all in one place.</p>
+        <a class="btn btn-accent btn-lg cta" th:href="@{/deals}">Shop Now <svg class="icon"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <img class="art" th:src="@{/img/banners/hero-home.jpg}" alt="Laptop, headphones, smartwatch, smartphone and sneakers">
+    </section>
+
+    <div class="sect-head"><h2>Shop by Category</h2><a th:href="@{/categories}">View All →</a></div>
+    <div class="cat-tiles">
+      <a class="cat-tile" th:each="c : ${categoryList}" th:href="@{/category/{s}(s=${c.slug})}"><img th:src="@{${@assets.tile(c.slug)}}" th:alt="${c.name}" loading="lazy"><span th:text="${c.name}">Category</span></a>
+    </div>
+
+    <div class="sect-head"><h2><svg class="icon fire"><use href="#i-fire"/></svg> Best Deals for You</h2><a th:href="@{/deals/all}">View All →</a></div>
+    <div class="pgrid five">
+      <th:block th:each="p : ${featured}"><th:block th:replace="~{fragments/layout :: productCard(${p})}"></th:block></th:block>
+    </div>
+
+    <div class="card trust">
+      <div><svg class="icon"><use href="#i-truck"/></svg><span><b>Fast &amp; Reliable Delivery</b><small>Free above ₹499</small></span></div>
+      <div><svg class="icon"><use href="#i-shield"/></svg><span><b>Secure Payments</b><small>Shop with confidence</small></span></div>
+      <div><svg class="icon"><use href="#i-refresh"/></svg><span><b>Easy Returns</b><small>7-day hassle-free returns</small></span></div>
+      <div><svg class="icon"><use href="#i-headset"/></svg><span><b>24/7 Support</b><small>We're here for you</small></span></div>
+    </div>
+
+    <div class="sect-head"><h2>Top Picks for You</h2></div>
+    <div class="picks">
+      <a class="pick" th:each="k : ${picks}" th:classappend="${k[4]}" th:href="@{${k[2]}}"><span><b th:text="${k[0]}">Laptops</b><small th:text="${k[1]}">for Work</small></span><img th:src="@{${k[3]}}" alt="" loading="lazy"></a>
+    </div>
+  </main>
+
+  <aside class="rail">
+    <div class="card welcome">
+      <div class="top"><span class="avatar" th:text="${@fmt.initials(me.fullName)}">SK</span><div><h3>Welcome back!<br><span th:text="${me.fullName}">Sriram K</span> 👋</h3><p>Good to see you again!</p></div></div>
+      <div class="stat3">
+        <a th:href="@{/cart}"><svg class="icon"><use href="#i-cart"/></svg><b th:text="${cartCount}">0</b>Items in Cart</a>
+        <a th:href="@{/wishlist}"><svg class="icon"><use href="#i-heart"/></svg><b th:text="${wishCount}">0</b>On Wishlist</a>
+        <a th:href="@{/orders}"><svg class="icon"><use href="#i-package"/></svg><b th:text="${orderCount}">0</b>Orders</a>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div>
+        <h3>SriramMart<br>AI Assistant</h3>
+        <p><span class="online"></span>Online<br>Ask about products, orders, stock, offers and more!</p>
+        <button type="button" class="btn" data-chat-open>Chat Now <svg class="icon sm"><use href="#i-arrow-right"/></svg></button>
+      </div>
+      <img th:src="@{/img/robot.png}" alt="SriramMart AI Assistant">
+    </div>
+    <div class="offer-card">
+      <h3>Exclusive Offers<br>Just for You!</h3>
+      <p>Grab the best deals on your favourite products.</p>
+      <div class="pill-row mb"><span class="code" th:each="c : ${coupons}" th:text="${c.code}">SRI200</span></div>
+      <a class="btn btn-accent btn-sm" th:href="@{/deals}">View Offers <svg class="icon sm"><use href="#i-arrow-right"/></svg></a>
+    </div>
+  </aside>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

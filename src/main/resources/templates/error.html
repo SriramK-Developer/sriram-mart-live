@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Something went wrong')}"></head>
+<body>
+<div style="min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center">
+  <div>
+    <img th:src="@{/img/logo-full.png}" alt="SriramMart" style="width:220px;margin:0 auto 24px;mix-blend-mode:multiply">
+    <h1 style="font-size:64px;margin:0;color:#0b57d0" th:text="${status != null} ? ${status} : 'Oops'">404</h1>
+    <p style="font-size:18px;color:#66758f;margin:8px 0 22px" th:text="${status == 404} ? 'We could not find that page.' : (${status == 403} ? 'You do not have access to this page.' : 'Something went wrong on our side. Please try again.')">We could not find that page.</p>
+    <a class="btn btn-primary" th:href="@{/}">Back to SriramMart</a>
+  </div>
+</div>
+</body>
+</html>

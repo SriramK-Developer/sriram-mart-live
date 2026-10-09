@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-user"/></svg><div><h1>My Account</h1><p>Manage your profile, delivery address and password.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="two-col" style="grid-template-columns:minmax(0,1fr) minmax(0,420px)">
+      <form class="card form-card" th:action="@{/account/profile}" method="post">
+        <h3 style="margin-bottom:14px">Profile &amp; address</h3>
+        <div class="grid2"><div class="field"><label>Username</label><input type="text" th:value="${me.username}" disabled></div><div class="field"><label>Email</label><input type="text" th:value="${me.email}" disabled></div></div>
+        <div class="grid2"><div class="field"><label for="fullName">Full name</label><input type="text" id="fullName" name="fullName" th:value="${form.fullName}" maxlength="100" required></div><div class="field"><label for="phone">Phone</label><input type="tel" id="phone" name="phone" th:value="${form.phone}" maxlength="10"></div></div>
+        <div class="field"><label for="addressLine">Address</label><input type="text" id="addressLine" name="addressLine" th:value="${form.addressLine}" maxlength="200"></div>
+        <div class="grid3"><div class="field"><label for="city">City</label><input type="text" id="city" name="city" th:value="${form.city}" maxlength="80"></div><div class="field"><label for="stateName">State</label><input type="text" id="stateName" name="stateName" th:value="${form.stateName}" maxlength="80"></div><div class="field"><label for="pincode">Pincode</label><input type="text" id="pincode" name="pincode" th:value="${form.pincode}" maxlength="6"></div></div>
+        <button class="btn btn-primary" type="submit">Save changes</button>
+      </form>
+      <form class="card form-card" th:action="@{/account/password}" method="post" autocomplete="off">
+        <h3 style="margin-bottom:14px">Change password</h3>
+        <div class="field"><label for="current">Current password</label><input type="password" id="current" name="current" required autocomplete="current-password" maxlength="64"></div>
+        <div class="field"><label for="next">New password</label><input type="password" id="next" name="next" required autocomplete="new-password" maxlength="64"></div>
+        <div class="field"><label for="confirm">Confirm new password</label><input type="password" id="confirm" name="confirm" required autocomplete="new-password" maxlength="64"></div>
+        <p class="muted small">8+ characters with uppercase, lowercase and a number.</p>
+        <button class="btn btn-primary" type="submit">Update password</button>
+      </form>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

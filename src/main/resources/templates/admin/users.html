@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-users"/></svg><div><h1>Users &amp; Sellers</h1><p>Enable or disable accounts and approve new sellers.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="seg"><a th:href="@{/admin/users}" th:classappend="${role == 'ALL'} ? 'on'">All</a><a th:href="@{/admin/users(role='BUYER')}" th:classappend="${role == 'BUYER'} ? 'on'">Buyers</a><a th:href="@{/admin/users(role='SELLER')}" th:classappend="${role == 'SELLER'} ? 'on'">Sellers</a><a th:href="@{/admin/users(role='ADMIN')}" th:classappend="${role == 'ADMIN'} ? 'on'">Admins</a></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>
+      <tr th:each="u : ${list}">
+        <td><b th:text="${u.storeName != null ? u.storeName : u.fullName}">Name</b></td>
+        <td th:text="${u.username}">user</td><td th:text="${u.email}">mail</td>
+        <td><span class="tag" th:classappend="${u.role.name() == 'ADMIN'} ? 'purple' : (${u.role.name() == 'SELLER'} ? 'green' : '')" th:text="${u.roleLabel}">Buyer</span></td>
+        <td><span class="tag orange" th:if="${u.role.name() == 'SELLER' and !u.approved}">Pending approval</span><span class="tag green" th:if="${u.enabled and (u.role.name() != 'SELLER' or u.approved)}">Active</span><span class="tag red" th:unless="${u.enabled}">Disabled</span></td>
+        <td th:text="${@fmt.date(u.createdAt)}">date</td>
+        <td class="right">
+          <form class="inline" th:if="${u.role.name() == 'SELLER' and !u.approved}" th:action="@{/admin/users/{id}/approve(id=${u.id})}" method="post"><button class="btn btn-primary btn-sm" type="submit">Approve</button></form>
+          <th:block th:if="${u.role.name() != 'ADMIN'}">
+            <form class="inline" th:if="${u.enabled}" th:action="@{/admin/users/{id}/enabled(id=${u.id})}" method="post"><input type="hidden" name="enabled" value="false"><button class="btn btn-danger btn-sm" type="submit" data-confirm="Disable this account?">Disable</button></form>
+            <form class="inline" th:unless="${u.enabled}" th:action="@{/admin/users/{id}/enabled(id=${u.id})}" method="post"><input type="hidden" name="enabled" value="true"><button class="btn btn-outline btn-sm" type="submit">Enable</button></form>
+          </th:block>
+        </td>
+      </tr>
+    </tbody></table></div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-lock"/></svg><div><h1>Checkout</h1><p>Enter your delivery details and choose how to pay.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <form th:action="@{/checkout}" method="post" class="two-col" novalidate>
+      <div>
+        <div class="card pad mb">
+          <h3 style="margin-bottom:14px">Delivery address</h3>
+          <div class="grid2"><div class="field"><label for="fullName">Full name</label><input type="text" id="fullName" name="fullName" th:value="${form.fullName}" maxlength="100" required></div>
+          <div class="field"><label for="phone">Phone</label><input type="tel" id="phone" name="phone" th:value="${form.phone}" maxlength="10" inputmode="numeric" required></div></div>
+          <div class="field"><label for="addressLine">Address</label><input type="text" id="addressLine" name="addressLine" th:value="${form.addressLine}" maxlength="200" placeholder="House no., street, area" required></div>
+          <div class="grid3"><div class="field"><label for="city">City</label><input type="text" id="city" name="city" th:value="${form.city}" maxlength="80" required></div>
+          <div class="field"><label for="stateName">State</label><input type="text" id="stateName" name="stateName" th:value="${form.stateName}" maxlength="80" required></div>
+          <div class="field"><label for="pincode">Pincode</label><input type="text" id="pincode" name="pincode" th:value="${form.pincode}" maxlength="6" inputmode="numeric" required></div></div>
+        </div>
+        <div class="card pad">
+          <h3 style="margin-bottom:14px">Payment method</h3>
+          <label class="pay-opt" th:each="m : ${methods}"><input type="radio" name="paymentMethod" th:value="${m.name()}" th:checked="${form.paymentMethod == m.name()}" data-pay><span th:text="${m.label}">Cash on Delivery</span></label>
+          <div class="field hidden" data-upi-field><label for="upiId">UPI ID</label><input type="text" id="upiId" name="upiId" th:value="${form.upiId}" maxlength="60" placeholder="name@bank"></div>
+          <p class="muted small">Online payments use a built-in demo gateway: no real money moves and no card details are collected or stored. Connect a payment provider (for example Razorpay) before going live.</p>
+        </div>
+      </div>
+      <div>
+        <div class="card summary">
+          <h3>Order summary</h3>
+          <div class="mini-list mb"><div class="it" th:each="i : ${items}"><img th:src="@{${i.product.imageMain}}" alt=""><div class="grow"><b th:text="${i.product.name}">Name</b><small class="muted" th:text="'Qty ' + ${i.quantity}">Qty 1</small></div><b th:text="${@fmt.inr(i.lineTotal)}">₹999</b></div></div>
+          <div class="row"><span th:text="'Items (' + ${summary.units} + ')'">Items</span><span th:text="${@fmt.inr(summary.mrpTotal)}">₹0</span></div>
+          <div class="row"><span>Discount</span><span class="save" th:text="'- ' + ${@fmt.inr(summary.totalDiscount)}">- ₹0</span></div>
+          <div class="row"><span>Delivery Charges</span><span th:class="${summary.freeDelivery} ? 'free'" th:text="${summary.freeDelivery} ? 'FREE' : ${@fmt.inr(summary.delivery)}">FREE</span></div>
+          <div class="row total"><span>Total</span><span th:text="${@fmt.inr(summary.total)}">₹0</span></div>
+          <button type="submit" class="btn btn-accent btn-lg btn-block">Place Order <svg class="icon"><use href="#i-arrow-right"/></svg></button>
+          <p class="muted small center" style="margin-top:10px">By placing your order you agree to our 7-day return policy.</p>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

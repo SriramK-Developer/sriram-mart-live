@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="crumbs"><a th:href="@{/orders}">My Orders</a><span class="sep">›</span><span th:text="'#' + ${order.orderNo}">#SM123456</span></div>
+    <div class="page-head"><svg class="icon lg"><use href="#i-package"/></svg><div><h1 th:text="'Order #' + ${order.orderNo}">Order</h1><p>Placed on <span th:text="${@fmt.dateTime(order.createdAt)}">date</span></p></div>
+      <form th:action="@{/orders/{no}/cancel(no=${order.orderNo})}" method="post" style="margin-left:auto" th:if="${order.cancellable}"><button type="submit" class="btn btn-danger" data-confirm="Cancel this order? Items will go back in stock.">Cancel order</button></form>
+    </div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+
+    <div class="card pad mb">
+      <div class="flash err" th:if="${order.status.name() == 'CANCELLED'}" style="margin:0">This order was cancelled.</div>
+      <div class="timeline" th:if="${order.status.name() != 'CANCELLED'}">
+        <div class="tstep" th:each="s : ${steps}" th:classappend="${s.ordinal() lt order.status.ordinal()} ? 'done' : (${s.ordinal() == order.status.ordinal()} ? 'now' : '')"><i th:text="${s.ordinal() lt order.status.ordinal()} ? '✓' : ${s.ordinal() + 1}">1</i><span th:text="${s.label}">Placed</span></div>
+      </div>
+      <p class="muted center" th:if="${!order.status.isFinal()}">Expected delivery by <b th:text="${@fmt.day(order.expectedDelivery)}">Fri, 25 Sep</b></p>
+    </div>
+
+    <div class="two-col">
+      <div class="card order-card"><div class="ob">
+        <div class="oline" th:each="i : ${order.items}">
+          <img th:src="@{${i.imagePath}}" alt="">
+          <div style="flex:1"><a th:href="@{/product/{id}(id=${i.product.id})}" th:text="${i.productName}">Product</a><div class="muted small" th:text="${i.subtitle}">sub</div><div class="muted small" th:text="'Qty ' + ${i.quantity} + ' × ' + ${@fmt.inr(i.unitPrice)}">Qty</div><div class="small">Sold by <span th:text="${i.seller.storeName != null} ? ${i.seller.storeName} : ${i.seller.fullName}">Seller</span></div></div>
+          <div class="right"><b th:text="${@fmt.inr(i.lineTotal)}">₹999</b><br><span class="tag gray" th:text="${i.status.label}">Shipped</span></div>
+        </div>
+      </div></div>
+      <div>
+        <div class="card summary" style="position:static">
+          <h3>Payment summary</h3>
+          <div class="row"><span>Items</span><span th:text="${@fmt.inr(order.subtotal)}">₹0</span></div>
+          <div class="row"><span>Discount</span><span class="save" th:text="'- ' + ${@fmt.inr(order.discount)}">₹0</span></div>
+          <div class="row" th:if="${order.couponCode != null}"><span>Coupon</span><span class="code" th:text="${order.couponCode}">SRI200</span></div>
+          <div class="row"><span>Delivery</span><span th:text="${order.deliveryCharge.signum() == 0} ? 'FREE' : ${@fmt.inr(order.deliveryCharge)}">FREE</span></div>
+          <div class="row total"><span>Total</span><span th:text="${@fmt.inr(order.total)}">₹0</span></div>
+          <div class="row"><span>Payment</span><span><span th:text="${order.paymentMethod.label}">COD</span> · <span class="tag" th:classappend="${order.paymentStatus.name() == 'PAID'} ? 'green' : (${order.paymentStatus.name() == 'REFUNDED'} ? 'purple' : 'orange')" th:text="${order.paymentStatus.name().toLowerCase()}">pending</span></span></div>
+        </div>
+        <div class="card pad mt"><b>Delivery address</b><p class="muted" style="margin:6px 0 0"><span th:text="${order.shipName}">Name</span><br><span th:text="${order.shipAddress}">Address</span><br><span th:text="${order.shipCity} + ', ' + ${order.shipState} + ' - ' + ${order.shipPincode}">City</span><br>Phone: <span th:text="${order.shipPhone}">98</span></p></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

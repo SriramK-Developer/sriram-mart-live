@@ -1,0 +1,40 @@
+# SriramMart + MySQL.   Usage:  cp .env.example .env   (edit passwords)   then   docker compose up --build
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: srirammart
+      MYSQL_USER: srirammart_app
+      MYSQL_PASSWORD: ${DB_PASS}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      DB_URL: jdbc:mysql://db:3306/srirammart?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
+      DB_USER: srirammart_app
+      DB_PASS: ${DB_PASS}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      REMEMBER_ME_KEY: ${REMEMBER_ME_KEY}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      CHATBOT_API_KEY: ${CHATBOT_API_KEY:-}
+    volumes:
+      - uploads:/app/uploads
+volumes:
+  dbdata:
+  uploads:

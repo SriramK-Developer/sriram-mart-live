@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="crumbs"><a th:href="@{/}">Home</a><span class="sep">›</span><span>Deals &amp; Offers</span></div>
+    <div class="page-head"><svg class="icon lg"><use href="#i-tag"/></svg><div><h1>Deals &amp; Offers</h1><p>Big savings, better choices! Explore the best deals, limited-time offers and exclusive discounts on your favourite products.</p></div></div>
+
+    <section class="hero warm">
+      <div class="copy">
+        <div class="eyebrow">Limited time only</div>
+        <h1>Up to <em class="big-offer" th:text="${bestOff} + '%'">70%</em> OFF</h1>
+        <p>Top brands. Best deals. Don't miss out!</p>
+        <a class="btn btn-accent btn-lg cta" th:href="@{/deals/all}">Shop Now <svg class="icon"><use href="#i-arrow-right"/></svg></a>
+      </div>
+      <img class="art" th:src="@{/img/banners/hero-deals.jpg}" alt="Top brand deals">
+    </section>
+
+    <div class="sect-head"><h2>Deals by Category</h2></div>
+    <div class="cat-tiles">
+      <a class="tile-offer" th:each="c : ${cats}" th:href="@{/category/{s}(s=${c.slug})}"><img th:src="@{${@assets.tile(c.slug)}}" th:alt="${c.name}" loading="lazy"><b th:text="${c.name}">Category</b><small th:text="'Up to ' + ${offers.get(c.id)} + '% Off'">Up to 40% Off</small></a>
+    </div>
+
+    <div class="sect-head"><h2><svg class="icon fire"><use href="#i-fire"/></svg> Today's Best Deals</h2><a th:href="@{/deals/all}">View All Deals →</a></div>
+    <div class="pgrid five">
+      <th:block th:each="p : ${bestDeals}"><th:block th:replace="~{fragments/layout :: productCard(${p})}"></th:block></th:block>
+    </div>
+
+    <div class="sect-head"><h2>Coupons &amp; Offers</h2></div>
+    <div class="info4">
+      <div class="card it" th:each="c : ${coupons}"><svg class="icon"><use href="#i-percent"/></svg><b><span class="code" th:text="${c.code}">SRI200</span></b><span class="muted" th:text="${c.description}">description</span><a th:href="@{/cart}">Apply in cart →</a></div>
+      <div class="card it"><svg class="icon"><use href="#i-truck"/></svg><b>Free Delivery</b><span class="muted">On orders above ₹499</span><a th:href="@{/deals/all}">Shop Now →</a></div>
+      <div class="card it"><svg class="icon"><use href="#i-shield"/></svg><b>Safe &amp; Secure</b><span class="muted">Secure payments and 7-day returns</span></div>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

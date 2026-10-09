@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-clipboard"/></svg><div><h1>My Orders</h1><p>Track, return or buy things again.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="empty" th:if="${orders.isEmpty()}"><h3>No orders yet</h3><p>When you place an order it will show up here.</p><a class="btn btn-primary" th:href="@{/deals}">Start shopping</a></div>
+    <div class="card order-card" th:each="o : ${orders}">
+      <div class="oh">
+        <div><small class="muted">ORDER PLACED</small><b th:text="${@fmt.date(o.createdAt)}">18 Sep 2026</b></div>
+        <div><small class="muted">TOTAL</small><b th:text="${@fmt.inr(o.total)}">₹1,299</b></div>
+        <div><small class="muted">ORDER #</small><b th:text="${o.orderNo}">SM123456</b></div>
+        <div style="margin-left:auto"><span class="tag" th:classappend="${o.status.name() == 'DELIVERED'} ? 'green' : (${o.status.name() == 'CANCELLED'} ? 'red' : 'orange')" th:text="${o.status.label}">Shipped</span></div>
+        <a class="btn btn-outline btn-sm" th:href="@{/orders/{no}(no=${o.orderNo})}">View details</a>
+      </div>
+      <div class="ob">
+        <div class="oline" th:each="i : ${o.items}">
+          <img th:src="@{${i.imagePath}}" alt="">
+          <div style="flex:1"><a th:href="@{/product/{id}(id=${i.product.id})}" th:text="${i.productName}">Product</a><div class="muted small" th:text="'Qty ' + ${i.quantity} + ' · ' + ${@fmt.inr(i.lineTotal)}">Qty 1</div></div>
+          <span class="tag gray" th:text="${i.status.label}">Shipped</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

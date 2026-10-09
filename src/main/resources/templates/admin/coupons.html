@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-percent"/></svg><div><h1>Coupons</h1><p>Create discount codes shoppers can apply in their cart.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <form class="card form-card mb" th:action="@{/admin/coupons}" method="post">
+      <h3 style="margin-bottom:12px">New coupon</h3>
+      <div class="grid3">
+        <div class="field"><label for="code">Code</label><input type="text" id="code" name="code" maxlength="20" required placeholder="FESTIVE20"></div>
+        <div class="field"><label for="percent">Percent off</label><input type="number" id="percent" name="percent" min="0" max="90" value="0"></div>
+        <div class="field"><label for="flat">…or flat amount (₹)</label><input type="number" id="flat" name="flat" min="0" step="1"></div>
+        <div class="field"><label for="max">Max discount (₹)</label><input type="number" id="max" name="max" min="0" step="1"></div>
+        <div class="field"><label for="min">Minimum order (₹)</label><input type="number" id="min" name="min" min="0" step="1"></div>
+        <div class="field"><label for="expires">Expires on</label><input type="date" id="expires" name="expires"></div>
+      </div>
+      <div class="field"><label for="description">Description shown to shoppers</label><input type="text" id="description" name="description" maxlength="180"></div>
+      <button class="btn btn-primary" type="submit">Create coupon</button>
+    </form>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Offer</th><th>Min order</th><th>Expires</th><th>Used</th><th>Status</th><th></th></tr></thead><tbody>
+      <tr th:each="c : ${list}">
+        <td><span class="code" th:text="${c.code}">SRI200</span></td>
+        <td><span th:text="${c.flatAmount.signum() gt 0} ? (${@fmt.inr(c.flatAmount)} + ' off') : (${c.discountPercent} + '% off')">₹200 off</span><br><small class="muted" th:text="${c.description}">desc</small></td>
+        <td th:text="${@fmt.inr(c.minOrder)}">₹0</td><td th:text="${c.expiresOn != null} ? ${@fmt.date(c.expiresOn)} : '—'">date</td><td th:text="${c.usedCount}">0</td>
+        <td><span class="tag green" th:if="${c.active and !c.expired}">Active</span><span class="tag red" th:if="${c.expired}">Expired</span><span class="tag gray" th:if="${!c.active}">Off</span></td>
+        <td class="right"><form class="inline" th:action="@{/admin/coupons/{id}/toggle(id=${c.id})}" method="post"><button class="btn btn-outline btn-sm" type="submit" th:text="${c.active} ? 'Turn off' : 'Turn on'">Toggle</button></form></td>
+      </tr>
+    </tbody></table></div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

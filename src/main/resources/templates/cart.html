@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head">
+      <svg class="icon lg"><use href="#i-cart"/></svg>
+      <div><h1>My Cart <small class="muted" style="font-weight:500;font-size:15px" th:text="'(' + ${items.size()} + (${items.size() == 1} ? ' Item)' : ' Items)')">(4 Items)</small></h1><p>Review your items and proceed to checkout</p></div>
+      <a class="btn btn-ghost" style="margin-left:auto" th:href="@{/}"><svg class="icon sm"><use href="#i-arrow-left"/></svg>Continue Shopping</a>
+    </div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+
+    <div class="empty" th:if="${items.isEmpty()}">
+      <h3>Your cart is empty</h3><p>Looks like you haven't added anything yet.</p>
+      <a class="btn btn-primary" th:href="@{/deals}">Browse deals</a>
+    </div>
+
+    <div class="two-col" th:if="${!items.isEmpty()}">
+      <div>
+        <div class="card">
+          <div class="line" th:each="i : ${items}">
+            <a th:href="@{/product/{id}(id=${i.product.id})}"><img class="thumb" th:src="@{${i.product.imageMain}}" th:alt="${i.product.name}"></a>
+            <div>
+              <h3><a th:href="@{/product/{id}(id=${i.product.id})}" th:text="${i.product.name}">Name</a></h3>
+              <div class="sub" th:text="${i.product.subtitle}">Subtitle</div>
+              <span class="tag green" th:if="${i.product.stock ge i.quantity}" th:text="${i.product.stockLabel}">In Stock</span>
+              <span class="tag red" th:if="${i.product.stock lt i.quantity}" th:text="${i.product.stock le 0} ? 'Out of Stock' : ('Only ' + ${i.product.stock} + ' left')">Out of Stock</span>
+              <div class="small muted" style="margin-top:6px"><svg class="icon sm" style="vertical-align:-3px"><use href="#i-store"/></svg> Sold by <span th:text="${i.product.seller.storeName != null} ? ${i.product.seller.storeName} : ${i.product.seller.fullName}">Seller</span></div>
+            </div>
+            <div class="price">
+              <strong th:text="${@fmt.inr(i.product.price)}">₹999</strong>
+              <s th:if="${i.product.discountPercent gt 0}" th:text="${@fmt.inr(i.product.mrp)}">₹1,299</s>
+              <span class="tag green" th:if="${i.product.discountPercent gt 0}" th:text="${i.product.discountPercent + '% OFF'}">20% OFF</span>
+              <div class="ctrl">
+                <form th:action="@{/cart/update}" method="post" class="inline">
+                  <input type="hidden" name="itemId" th:value="${i.id}">
+                  <div class="stepper"><button type="submit" name="qty" th:value="${i.quantity - 1}" aria-label="Decrease"><svg class="icon sm"><use href="#i-minus"/></svg></button><input type="text" th:value="${i.quantity}" readonly aria-label="Quantity"><button type="submit" name="qty" th:value="${i.quantity + 1}" th:disabled="${i.quantity ge maxQty}" aria-label="Increase"><svg class="icon sm"><use href="#i-plus"/></svg></button></div>
+                </form>
+                <form th:action="@{/cart/remove}" method="post"><input type="hidden" name="itemId" th:value="${i.id}"><button type="submit" class="btn btn-danger btn-sm" aria-label="Remove"><svg class="icon sm"><use href="#i-trash"/></svg></button></form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card pad mt" style="display:flex;justify-content:space-between">
+          <form th:action="@{/cart/move-to-wishlist}" method="post"><button class="link-btn" type="submit"><svg class="icon sm" style="vertical-align:-3px"><use href="#i-heart"/></svg> Move all to Wishlist</button></form>
+          <form th:action="@{/cart/clear}" method="post"><button class="link-btn" type="submit" data-confirm="Remove every item from your cart?"><svg class="icon sm" style="vertical-align:-3px"><use href="#i-trash"/></svg> Clear Cart</button></form>
+        </div>
+      </div>
+
+      <div>
+        <div class="card summary">
+          <h3>Price Details</h3>
+          <div class="row"><span th:text="'Items (' + ${summary.units} + ')'">Items (4)</span><span th:text="${@fmt.inr(summary.mrpTotal)}">₹26,796</span></div>
+          <div class="row"><span>Discount</span><span class="save" th:text="'- ' + ${@fmt.inr(summary.productDiscount)}">- ₹7,598</span></div>
+          <div class="row" th:if="${summary.couponDiscount.signum() gt 0}"><span>Coupon (<b th:text="${couponCode}">SRI200</b>)</span><span class="save" th:text="'- ' + ${@fmt.inr(summary.couponDiscount)}">- ₹200</span></div>
+          <div class="row"><span>Delivery Charges</span><span th:class="${summary.freeDelivery} ? 'free'" th:text="${summary.freeDelivery} ? 'FREE' : ${@fmt.inr(summary.delivery)}">FREE</span></div>
+          <div class="row total"><span>Total Amount</span><span th:text="${@fmt.inr(summary.total)}">₹19,198</span></div>
+          <p class="save small" th:if="${summary.totalDiscount.signum() gt 0}" th:text="'You will save ' + ${@fmt.inr(summary.totalDiscount)} + ' on this order'">You will save</p>
+          <a class="btn btn-accent btn-lg btn-block" th:href="@{/checkout}"><svg class="icon"><use href="#i-lock"/></svg>Proceed to Checkout <svg class="icon"><use href="#i-arrow-right"/></svg></a>
+        </div>
+        <div class="card panel note-card"><svg class="icon"><use href="#i-truck"/></svg><span><b>Free Delivery</b><br><span class="muted">On orders above ₹499</span></span></div>
+        <div class="card pad mt">
+          <b>Apply Coupon</b><div class="muted small">Get extra discount on your order</div>
+          <form th:action="@{/cart/coupon}" method="post" class="coupon-form" th:if="${couponCode == null}">
+            <input type="text" name="code" placeholder="Enter code" maxlength="20" required><button class="btn btn-outline" type="submit">Apply</button>
+          </form>
+          <form th:action="@{/cart/coupon}" method="post" th:if="${couponCode != null}" class="mt"><input type="hidden" name="action" value="remove"><span class="code" th:text="${couponCode}">SRI200</span> <button class="link-btn" type="submit">Remove</button></form>
+          <div class="mt small" th:if="${!coupons.isEmpty()}"><span class="muted">Available: </span><span class="code" style="margin-right:6px" th:each="c : ${coupons}" th:text="${c.code}" th:title="${c.description}">SRI200</span></div>
+        </div>
+        <div class="card pad mt"><div style="display:flex;gap:12px;align-items:center"><svg class="icon lg" style="color:var(--blue)"><use href="#i-shield"/></svg><span><b>Secure &amp; Safe Payments</b><br><span class="muted small">UPI · Cards · Net Banking · Cash on Delivery</span></span></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

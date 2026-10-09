@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-store"/></svg><div><h1>Seller Dashboard</h1><p th:text="'Welcome back, ' + ${me.storeName != null ? me.storeName : me.fullName} + ' — here is how your store is doing.'">Welcome</p></div>
+      <a class="btn btn-primary" style="margin-left:auto" th:href="@{/seller/products/new}"><svg class="icon sm"><use href="#i-plus"/></svg>Add product</a></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="kpis">
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-rupee"/></svg></span><div><small>Revenue</small><b th:text="${@fmt.inr(revenue)}">₹0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-clipboard"/></svg></span><div><small>Orders</small><b th:text="${orderCount}">0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-package"/></svg></span><div><small>Units sold</small><b th:text="${units}">0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-grid"/></svg></span><div><small>Products</small><b th:text="${productCount}">0</b></div></div>
+      <div class="card kpi"><span class="ico"><svg class="icon"><use href="#i-truck"/></svg></span><div><small>To fulfil</small><b th:text="${openItems}">0</b></div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card pad"><h3>Revenue – last 14 days</h3>
+        <div class="chart"><div class="col" th:each="b : ${revenueBars}"><div class="bar" th:style="'height:' + ${b.pct} + '%'" th:title="${b.label + ': ' + @fmt.inr(b.value)}"></div><small th:text="${b.label}">18 Sep</small></div></div></div>
+      <div class="card pad"><h3 style="margin-bottom:8px">Best sellers</h3>
+        <div class="mini-list"><div class="it" th:each="p : ${topProducts}"><img th:src="@{${p.imageMain}}" alt=""><div class="grow"><b th:text="${p.name}">Name</b><small class="muted" th:text="${p.soldCount} + ' sold'">10 sold</small></div><b th:text="${@fmt.inr(p.price)}">₹1</b></div></div>
+        <p class="muted" th:if="${topProducts.isEmpty()}">No sales yet.</p></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card pad"><h3 style="margin-bottom:8px">Latest order items</h3>
+        <div class="tbl-wrap" style="border:0"><table class="tbl"><thead><tr><th>Order</th><th>Product</th><th>Qty</th><th>Status</th></tr></thead><tbody>
+          <tr th:each="i : ${recentItems}"><td th:text="${i.order.orderNo}">SM1</td><td th:text="${i.productName}">Product</td><td th:text="${i.quantity}">1</td><td><span class="tag gray" th:text="${i.status.label}">Placed</span></td></tr>
+        </tbody></table></div>
+        <p class="muted" th:if="${recentItems.isEmpty()}">No orders yet.</p>
+        <a th:href="@{/seller/orders}">Manage all orders →</a></div>
+      <div class="card pad"><h3 style="margin-bottom:8px">Low stock</h3>
+        <div class="mini-list"><div class="it" th:each="p : ${lowStock}"><img th:src="@{${p.imageMain}}" alt=""><div class="grow"><b th:text="${p.name}">Name</b></div><span class="tag orange" th:text="${p.stock} + ' left'">3 left</span></div></div>
+        <p class="muted" th:if="${lowStock.isEmpty()}">All products are well stocked.</p></div>
+    </div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

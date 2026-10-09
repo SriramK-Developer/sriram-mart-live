@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-grid"/></svg><div><h1>All Categories</h1><p>Browse everything SriramMart has to offer.</p></div></div>
+    <div class="pgrid">
+      <a class="tile-offer" th:each="c : ${categoryList}" th:href="@{/category/{s}(s=${c.slug})}">
+        <img th:src="@{${@assets.tile(c.slug)}}" th:alt="${c.name}" loading="lazy">
+        <b th:text="${c.name}">Category</b><small th:text="'Up to ' + ${offers.get(c.id)} + '% Off'">Up to 40% Off</small>
+      </a>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

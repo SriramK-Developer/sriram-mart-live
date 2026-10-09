@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell" th:classappend="${category == null} ? 'no-rail'">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="crumbs"><a th:href="@{/}">Home</a><span class="sep">›</span><span th:text="${heading}">Category</span></div>
+    <div class="page-head">
+      <svg class="icon lg" th:if="${category != null}"><use th:href="'#i-' + ${category.icon}"/></svg>
+      <svg class="icon lg" th:if="${category == null}"><use href="#i-search"/></svg>
+      <div><h1 th:text="${heading}">Category</h1><p th:text="${subheading}">Description</p></div>
+    </div>
+
+    <section class="hero compact" th:if="${category != null}" th:classappend="${category.slug == 'beauty-personal-care'} ? 'pink' : (${category.slug == 'fashion' or category.slug == 'home-living'} ? 'warm' : (${category.slug == 'groceries'} ? 'mint' : ''))">
+      <div class="copy">
+        <div class="eyebrow" th:text="${category.eyebrow}">Eyebrow</div>
+        <h1 th:text="${category.title}">Title</h1>
+        <p><strong>Up to <span class="big-offer" th:text="${offerPct} + '% OFF'">40% OFF</span></strong><br><span th:text="${category.subline}">Line</span></p>
+      </div>
+      <img class="art" th:src="@{${@assets.banner(category.slug)}}" th:alt="${category.name}">
+    </section>
+
+    <div class="chips" th:if="${chips != null}">
+      <a class="chip" th:each="v : ${chips.values}" th:href="@{${view.path}(sub=${v.value})}"><span th:text="${v.value}">Sub</span> <small class="muted" th:text="'(' + ${v.count} + ')'">(3)</small></a>
+    </div>
+
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+
+    <form id="filterForm" method="get" th:action="@{${view.path}}">
+      <input type="hidden" name="q" th:if="${view.params.q != null and !view.params.q.isBlank()}" th:value="${view.params.q}">
+      <div class="list-layout">
+        <aside class="filters">
+          <h3>Filters <a class="small" th:href="@{${view.clearUrl}}" th:if="${view.params.hasFilters()}">Clear all</a></h3>
+          <div class="f-group" th:each="g : ${view.groups}">
+            <h4 th:text="${g.title}">Group</h4>
+            <label class="f-opt" th:each="v, st : ${g.values}" th:classappend="${st.index ge 5 and !v.checked} ? 'extra hidden'">
+              <input type="checkbox" th:name="${g.param}" th:value="${v.value}" th:checked="${v.checked}" data-autosubmit>
+              <span th:text="${v.value}">Value</span> <small th:text="'(' + ${v.count} + ')'">(3)</small>
+            </label>
+            <button type="button" class="f-more" data-more th:if="${g.values.size() gt 5}">+ More</button>
+          </div>
+          <div class="f-group">
+            <h4>Price Range</h4>
+            <label class="f-opt" th:each="b : ${view.priceBuckets}"><input type="radio" name="price" th:value="${b.value}" th:checked="${b.checked}" data-autosubmit><span th:text="${b.label}">Under ₹500</span></label>
+          </div>
+          <div class="f-group">
+            <h4>Customer Rating</h4>
+            <label class="f-opt"><input type="radio" name="rating" value="4" th:checked="${view.params.rating != null and view.params.rating == 4.0}" data-autosubmit><span class="stars" style="--p:80%"></span><span>&amp; up</span></label>
+            <label class="f-opt"><input type="radio" name="rating" value="3" th:checked="${view.params.rating != null and view.params.rating == 3.0}" data-autosubmit><span class="stars" style="--p:60%"></span><span>&amp; up</span></label>
+          </div>
+        </aside>
+
+        <section>
+          <div class="toolbar">
+            <label for="sort" class="muted" style="margin:0">Sort by:</label>
+            <select name="sort" id="sort" data-autosubmit>
+              <option value="popularity" th:selected="${view.params.sort == 'popularity'}">Popularity</option>
+              <option value="price_asc" th:selected="${view.params.sort == 'price_asc'}">Price: Low to High</option>
+              <option value="price_desc" th:selected="${view.params.sort == 'price_desc'}">Price: High to Low</option>
+              <option value="rating" th:selected="${view.params.sort == 'rating'}">Customer Rating</option>
+              <option value="newest" th:selected="${view.params.sort == 'newest'}">Newest</option>
+            </select>
+            <span class="count" th:if="${view.totalItems gt 0}" th:text="'Showing ' + ${view.from} + ' - ' + ${view.to} + ' of ' + ${view.totalItems} + ' products'">Showing 1 - 20 of 100 products</span>
+          </div>
+
+          <div class="pgrid" th:if="${!products.isEmpty()}">
+            <th:block th:each="p : ${products}"><th:block th:replace="~{fragments/layout :: productCard(${p})}"></th:block></th:block>
+          </div>
+          <div class="empty" th:if="${products.isEmpty()}">
+            <h3>No products found</h3>
+            <p>Try removing a filter or searching with different words.</p>
+            <a class="btn btn-primary" th:href="@{${view.clearUrl}}">Clear filters</a>
+          </div>
+
+          <div class="pager" th:if="${view.totalPages gt 1}">
+            <a th:if="${view.currentPage gt 0}" th:href="@{${view.url(view.currentPage - 1)}}" aria-label="Previous">‹</a>
+            <th:block th:each="n : ${#numbers.sequence(0, view.totalPages - 1)}">
+              <span class="cur" th:if="${n == view.currentPage}" th:text="${n + 1}">1</span>
+              <a th:unless="${n == view.currentPage}" th:href="@{${view.url(n)}}" th:text="${n + 1}">2</a>
+            </th:block>
+            <a th:if="${view.currentPage lt view.totalPages - 1}" th:href="@{${view.url(view.currentPage + 1)}}" aria-label="Next">›</a>
+          </div>
+        </section>
+      </div>
+    </form>
+  </main>
+
+  <aside class="rail" th:if="${category != null}">
+    <div class="ai-card">
+      <div><h3>Need Help Choosing?</h3><p>Ask our AI Assistant for personalised recommendations.</p><button type="button" class="btn" data-chat-open>Chat Now <svg class="icon sm"><use href="#i-arrow-right"/></svg></button></div>
+      <img th:src="@{/img/robot.png}" alt="">
+    </div>
+    <div class="card rail-card why">
+      <h3>Why Shop With Us?</h3>
+      <div><svg class="icon"><use href="#i-shield"/></svg><span><b>Genuine Products</b><small>100% original &amp; branded</small></span></div>
+      <div><svg class="icon"><use href="#i-truck"/></svg><span><b>Fast Delivery</b><small>Free on orders above ₹499</small></span></div>
+      <div><svg class="icon"><use href="#i-refresh"/></svg><span><b>Easy Returns</b><small>Hassle-free 7 days</small></span></div>
+      <div><svg class="icon"><use href="#i-lock"/></svg><span><b>Secure Payments</b><small>UPI, cards, net banking, COD</small></span></div>
+    </div>
+  </aside>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

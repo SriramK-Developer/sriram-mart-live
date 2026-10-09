@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-upload"/></svg><div><h1>Bulk import</h1><p>Load thousands of products from a CSV file. Existing SKUs are updated; new SKUs are created.</p></div></div>
+    <div class="flash err" th:if="${importError != null}" th:text="${importError}">Error</div>
+    <div class="flash ok" th:if="${result != null}" th:text="${result.created} + ' created, ' + ${result.updated} + ' updated, ' + ${result.errors.size()} + ' rows skipped.'">Done</div>
+    <div class="card pad mb" th:if="${result != null and !result.errors.isEmpty()}"><b>Skipped rows</b><ul style="margin:8px 0 0;padding-left:18px"><li th:each="e, st : ${result.errors}" th:if="${st.index lt 50}" th:text="${e}">error</li></ul></div>
+    <form class="card form-card mb" th:action="@{/admin/import}" method="post" enctype="multipart/form-data">
+      <div class="field"><label for="file">CSV file (UTF-8, max 10 MB, 20,000 rows)</label><input type="file" id="file" name="file" accept=".csv,text/csv" required></div>
+      <button class="btn btn-primary" type="submit"><svg class="icon sm"><use href="#i-upload"/></svg>Import</button>
+    </form>
+    <div class="card pad">
+      <h3 style="margin-bottom:8px">Expected columns</h3>
+      <p class="muted">Header row (exact names): <code>sku, category, subCategory, brand, name, subtitle, price, mrp, rating, ratingCount, stock, seller, image, gallery, description, highlights, specs, featured</code></p>
+      <ul class="muted">
+        <li><b>category</b> – slug such as <code>mobiles-tablets</code>, <code>computers-accessories</code>, <code>fashion</code>, <code>home-living</code>, <code>beauty-personal-care</code>, <code>sports-fitness</code>, <code>books</code>, <code>toys-games</code>, <code>groceries</code></li>
+        <li><b>seller</b> – the seller's <i>username</i> (must be an approved seller account)</li>
+        <li><b>image</b> – a path such as <code>/img/products/my-item.jpg</code> (file placed in <code>static/img/products</code>) or an <code>/uploads/…</code> path</li>
+        <li><b>specs</b> – <code>|RAM:8 GB|Storage:128 GB|</code> &nbsp; · &nbsp; <b>highlights</b> – <code>Title|text~Title|text</code></li>
+      </ul>
+      <p class="muted">A ready-made sample is in <code>src/main/resources/data/products.csv</code>.</p>
+    </div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

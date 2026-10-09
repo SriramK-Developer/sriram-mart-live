@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login')}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<div class="auth">
+  <section class="auth-left">
+    <img class="logo" th:src="@{/img/logo-full.png}" alt="SriramMart – Better Choices, Brighter Days">
+    <h1>Your One-Stop<br>Shopping <em>Destination</em></h1>
+    <p class="lead">Discover amazing products from multiple sellers, at the best prices – all in one place.</p>
+    <div class="auth-feats">
+      <div><span class="ring"><svg class="icon lg"><use href="#i-truck"/></svg></span><span><b>Wide Range</b><small>Products across 9 categories</small></span></div>
+      <div><span class="ring"><svg class="icon lg"><use href="#i-shield"/></svg></span><span><b>Trusted Sellers</b><small>Shop with Confidence</small></span></div>
+      <div><span class="ring"><svg class="icon lg"><use href="#i-tag"/></svg></span><span><b>Best Prices</b><small>Value for Money</small></span></div>
+      <div><span class="ring"><svg class="icon lg"><use href="#i-headset"/></svg></span><span><b>24/7 Support</b><small>We're Here for You</small></span></div>
+    </div>
+    <img class="auth-art" th:src="@{/img/banners/login-art.jpg}" alt="">
+  </section>
+
+  <section class="auth-right">
+    <div class="auth-card">
+      <div class="welcome-t">Welcome to</div>
+      <img class="logo" th:src="@{/img/logo-full.png}" alt="SriramMart">
+      <div class="auth-tabs" role="tablist">
+        <button type="button" data-auth-tab="login" th:classappend="${tab == 'login'} ? 'on'">Login</button>
+        <button type="button" data-auth-tab="register" th:classappend="${tab == 'register'} ? 'on'">Register</button>
+      </div>
+
+      <div class="flash err" th:if="${error != null}" th:text="${error}">Incorrect username or password.</div>
+      <div class="flash ok" th:if="${loggedOut}">You have been signed out.</div>
+      <div class="flash ok" th:if="${success != null}" th:text="${success}">Account created.</div>
+      <div class="flash err" th:if="${errors != null and !errors.isEmpty()}"><ul><li th:each="e : ${errors}" th:text="${e}">error</li></ul></div>
+
+      <!-- LOGIN -->
+      <form th:action="@{/login}" method="post" data-auth-panel="login" th:classappend="${tab != 'login'} ? 'hidden'" autocomplete="on">
+        <div class="field iconfield"><svg class="icon"><use href="#i-mail"/></svg><input type="text" name="username" placeholder="Email or Username" required autocomplete="username" maxlength="120" autofocus></div>
+        <div class="field iconfield"><svg class="icon"><use href="#i-lock"/></svg><input type="password" name="password" id="loginPw" placeholder="Password" required autocomplete="current-password" maxlength="100"><button type="button" class="eye" data-toggle-pw="loginPw" aria-label="Show password"><svg class="icon"><use href="#i-eye"/></svg></button></div>
+        <div class="row-between"><label class="check"><input type="checkbox" name="remember-me" checked> Remember me</label><a href="#" data-oauth-msg="Password reset is handled by the administrator. Please contact support.">Forgot Password?</a></div>
+        <button type="submit" class="btn btn-primary btn-pill">Login <svg class="icon"><use href="#i-arrow-right"/></svg></button>
+      </form>
+
+      <!-- REGISTER -->
+      <form th:action="@{/register}" method="post" data-auth-panel="register" th:classappend="${tab != 'register'} ? 'hidden'" autocomplete="off">
+        <div class="field"><input type="text" name="fullName" placeholder="Full name" required maxlength="100" th:value="${form.fullName}"></div>
+        <div class="grid2">
+          <div class="field"><input type="text" name="username" placeholder="Username" required maxlength="30" th:value="${form.username}"></div>
+          <div class="field"><input type="tel" name="phone" placeholder="Phone (optional)" maxlength="10" th:value="${form.phone}"></div>
+        </div>
+        <div class="field"><input type="email" name="email" placeholder="Email address" required maxlength="120" th:value="${form.email}"></div>
+        <div class="field check-row">
+          <label class="check"><input type="radio" name="accountType" value="BUYER" th:checked="${form.accountType != 'SELLER'}" data-account-type> I want to shop (Buyer)</label>
+          <label class="check"><input type="radio" name="accountType" value="SELLER" th:checked="${form.accountType == 'SELLER'}" data-account-type> I want to sell (Seller)</label>
+        </div>
+        <div class="field hidden" data-store-field><input type="text" name="storeName" placeholder="Store name" maxlength="100" th:value="${form.storeName}"></div>
+        <div class="grid2">
+          <div class="field"><input type="password" name="password" placeholder="Password" required maxlength="64" autocomplete="new-password"></div>
+          <div class="field"><input type="password" name="confirm" placeholder="Confirm password" required maxlength="64" autocomplete="new-password"></div>
+        </div>
+        <p class="strength">Use 8+ characters with uppercase, lowercase and a number.</p>
+        <button type="submit" class="btn btn-primary btn-pill">Create account <svg class="icon"><use href="#i-arrow-right"/></svg></button>
+      </form>
+
+      <div class="or">OR</div>
+      <button type="button" class="oauth" data-oauth-msg="Google sign-in is not configured on this server. Sign in with your SriramMart username and password.">
+        <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <button type="button" class="oauth" data-oauth-msg="Microsoft sign-in is not configured on this server. Sign in with your SriramMart username and password.">
+        <svg viewBox="0 0 23 23"><path fill="#f25022" d="M1 1h10v10H1z"/><path fill="#7fba00" d="M12 1h10v10H12z"/><path fill="#00a4ef" d="M1 12h10v10H1z"/><path fill="#ffb900" d="M12 12h10v10H12z"/></svg>
+        Continue with Microsoft
+      </button>
+      <div class="roles">
+        <div><svg class="icon" style="color:#ff7a00"><use href="#i-user"/></svg><span><b>Buyer</b><small>Shop &amp; Save</small></span></div>
+        <div><svg class="icon" style="color:#12a150"><use href="#i-store"/></svg><span><b>Seller</b><small>List &amp; Grow</small></span></div>
+        <div><svg class="icon" style="color:#7c3aed"><use href="#i-shield"/></svg><span><b>Admin</b><small>Manage Platform</small></span></div>
+      </div>
+    </div>
+  </section>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

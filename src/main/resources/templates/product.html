@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="crumbs">
+      <a th:href="@{/}">Home</a><span class="sep">›</span>
+      <a th:href="@{/category/{s}(s=${product.category.slug})}" th:text="${product.category.name}">Category</a>
+      <th:block th:if="${product.subCategory != null}"><span class="sep">›</span><a th:href="@{/category/{s}(s=${product.category.slug},sub=${product.subCategory})}" th:text="${product.subCategory}">Sub</a></th:block>
+    </div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="flash err" th:if="${!product.active}">This product is currently hidden from shoppers.</div>
+
+    <div class="pd">
+      <!-- gallery -->
+      <div>
+        <div class="gallery" th:classappend="${product.images.size() le 1} ? 'single'">
+          <div class="thumbs" th:if="${product.images.size() gt 1}">
+            <button type="button" th:each="im, st : ${product.images}" data-thumb th:attr="data-src=@{${im}}" th:classappend="${st.first} ? 'on'"><img th:src="@{${im}}" alt=""></button>
+          </div>
+          <div class="stage">
+            <button type="button" class="heart" data-wish th:attr="data-id=${product.id}" th:classappend="${wishIds != null and wishIds.contains(product.id)} ? 'on'" aria-label="Add to wishlist" th:if="${!me.seller and !me.admin}"><svg class="icon"><use href="#i-heart"/></svg></button>
+            <img id="mainImg" th:src="@{${product.imageMain}}" th:alt="${product.name}">
+          </div>
+        </div>
+        <div class="card panel ask-ai" th:if="${!me.seller and !me.admin}">
+          <div class="h"><img th:src="@{/img/robot-sm.png}" alt=""><div><b>Ask SriramMart AI</b><br><small class="muted">Get instant answers about this product</small></div></div>
+          <button type="button" class="q" data-ask="Is this product available in stock?">Is this product available in stock?</button>
+          <button type="button" class="q" data-ask="What is the warranty?">What is the warranty?</button>
+          <button type="button" class="q" data-ask="What are the key specifications?">What are the key specifications?</button>
+          <button type="button" class="btn btn-primary btn-sm" data-chat-open>Chat Now <svg class="icon sm"><use href="#i-arrow-right"/></svg></button>
+        </div>
+      </div>
+
+      <!-- info -->
+      <div>
+        <div class="brandline" th:if="${product.brand != null}"><a th:href="@{/search(q=${product.brand})}" th:text="${product.brand}">Brand</a></div>
+        <h1 th:text="${product.name}">Product name</h1>
+        <div class="meta-row">
+          <span class="rating-pill"><span class="stars" th:style="'--p:' + ${@fmt.starPct(product.rating)} + '%'"></span><b th:text="${product.rating}">4.3</b><span class="muted" th:text="'(' + ${@fmt.count(product.ratingCount)} + ' ratings)'">(2.4k ratings)</span></span>
+          <span class="sep"></span><span class="muted" th:if="${product.soldCount gt 0}" th:text="${@fmt.count(product.soldCount)} + '+ sold'">1.2k+ sold</span>
+        </div>
+        <div class="meta-row">
+          <span class="tag green" th:if="${product.stock gt 5}">In Stock</span>
+          <span class="tag orange" th:if="${product.stock gt 0 and product.stock le 5}" th:text="'Only ' + ${product.stock} + ' left'">Only 3 left</span>
+          <span class="tag red" th:if="${product.stock le 0}">Out of Stock</span>
+          <span class="tag red" th:if="${product.discountPercent gt 0}" th:text="${product.discountPercent} + '% Off'">18% Off</span>
+        </div>
+        <div class="price-row">
+          <strong th:text="${@fmt.inr(product.price)}">₹1,299</strong>
+          <s th:if="${product.discountPercent gt 0}" th:text="${@fmt.inr(product.mrp)}">₹1,599</s>
+          <span class="off" th:if="${product.discountPercent gt 0}" th:text="'(' + ${product.discountPercent} + '% OFF)'">(18% OFF)</span>
+        </div>
+        <div class="muted small">Inclusive of all taxes</div>
+
+        <div class="delivery">
+          <svg class="icon"><use href="#i-truck"/></svg>
+          <div>
+            <b th:if="${freeDelivery}">FREE delivery by <span th:text="${@fmt.day(eta)}">Fri, 25 Sep</span></b>
+            <b th:unless="${freeDelivery}">Delivery ₹40 by <span th:text="${@fmt.day(eta)}">Fri, 25 Sep</span></b>
+            <form th:action="@{/product/{id}/pincode(id=${product.id})}" method="post"><span class="muted">Deliver to</span><input type="text" name="pincode" inputmode="numeric" maxlength="6" pattern="[1-9][0-9]{5}" th:value="${pincode}" aria-label="Pincode"><button type="submit" class="btn btn-outline btn-sm">Change</button></form>
+          </div>
+        </div>
+
+        <h3 class="mb" style="font-size:16px" th:if="${!coupons.isEmpty()}">Available Offers</h3>
+        <div class="offers" th:if="${!coupons.isEmpty()}">
+          <div class="offer" th:each="c, st : ${coupons}" th:if="${st.index lt 3}"><b><svg class="icon"><use href="#i-percent"/></svg><span th:text="${c.code}">SRI200</span></b><span th:text="${c.description}">Description</span></div>
+        </div>
+
+        <form th:action="@{/cart/buy-now}" method="post" class="buy-row" th:if="${!me.seller and !me.admin}">
+          <input type="hidden" name="productId" th:value="${product.id}">
+          <div class="stepper"><button type="button" data-step="-1" aria-label="Decrease"><svg class="icon sm"><use href="#i-minus"/></svg></button><input type="number" name="qty" id="qty" value="1" min="1" th:max="${product.stock lt 10 ? product.stock : 10}" readonly><button type="button" data-step="1" aria-label="Increase"><svg class="icon sm"><use href="#i-plus"/></svg></button></div>
+          <button type="button" class="btn btn-accent btn-lg" style="flex:1" data-add-cart th:attr="data-id=${product.id}" data-qty-input="#qty" th:disabled="${product.stock le 0}"><svg class="icon"><use href="#i-cart"/></svg>Add to Cart</button>
+          <button type="submit" class="btn btn-primary btn-lg" style="flex:1" th:disabled="${product.stock le 0}">Buy Now</button>
+        </form>
+        <div class="perks">
+          <div><svg class="icon"><use href="#i-refresh"/></svg><span>7 Days<br><small class="muted">Easy Returns</small></span></div>
+          <div><svg class="icon"><use href="#i-rupee"/></svg><span>Cash on Delivery<br><small class="muted">Available</small></span></div>
+          <div><svg class="icon"><use href="#i-lock"/></svg><span>Secure<br><small class="muted">Transactions</small></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- tabs -->
+    <div class="tabs" role="tablist">
+      <button type="button" class="on" data-tab="about">About Product</button>
+      <button type="button" data-tab="specs">Specifications</button>
+      <button type="button" data-tab="reviews">Ratings &amp; Reviews</button>
+      <button type="button" data-tab="shipping">Shipping &amp; Returns</button>
+    </div>
+
+    <section class="tabpane on" data-pane="about">
+      <div class="about">
+        <div>
+          <h3>About this item</h3>
+          <p th:if="${product.description != null}" th:text="${product.description}" class="muted">Description</p>
+          <div class="hl" th:each="h : ${product.highlightList}"><span class="ck"><svg class="icon"><use href="#i-check"/></svg></span><div><b th:text="${h[0]}">Title</b><p th:text="${h[1]}">Text</p></div></div>
+        </div>
+        <div>
+          <h3>Specifications</h3>
+          <table class="spec"><tr th:each="e : ${product.specMap.entrySet()}"><td th:text="${e.key}">Key</td><td th:text="${e.value}">Value</td></tr></table>
+          <h3 style="margin-top:26px" th:if="${product.brand != null}">About the Brand</h3>
+          <p class="muted" th:if="${product.brand != null}"><b th:text="${product.brand}">Brand</b> — <a th:href="@{/search(q=${product.brand})}">see all products from this brand</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabpane" data-pane="specs">
+      <h3>Specifications</h3>
+      <table class="spec" style="max-width:720px"><tr th:each="e : ${product.specMap.entrySet()}"><td th:text="${e.key}">Key</td><td th:text="${e.value}">Value</td></tr></table>
+    </section>
+
+    <section class="tabpane" data-pane="reviews" id="reviews">
+      <div class="rev-top">
+        <div><div class="rev-score" th:text="${product.rating}">4.3</div><span class="stars" th:style="'--p:' + ${@fmt.starPct(product.rating)} + '%'"></span><div class="muted small" th:text="'(' + ${@fmt.count(product.ratingCount)} + ' ratings)'">(2.4k ratings)</div></div>
+        <div class="dist"><div th:each="n : ${#numbers.sequence(0, 4)}"><span th:text="${5 - n} + ' ★'">5 ★</span><span class="bar"><i th:style="'width:' + ${dist[n]} + '%'"></i></span><span th:text="${dist[n]} + '%'">68%</span></div></div>
+      </div>
+      <div class="reviews">
+        <div class="review" th:each="r : ${reviews}">
+          <div class="who"><span class="avatar" th:text="${@fmt.initials(r.user.fullName)}">RS</span><div><b th:text="${r.user.fullName}">Rahul S.</b><br><small class="muted" th:text="${@fmt.ago(r.createdAt)}">2 days ago</small></div></div>
+          <span class="stars" th:style="'--p:' + ${@fmt.starPct(r.stars)} + '%'"></span> <span class="tag green" th:if="${r.verified}">Verified purchase</span>
+          <p th:text="${r.body}">Great product</p>
+          <small class="muted" th:text="${r.helpful} + ' found this helpful'">124 found this helpful</small>
+        </div>
+      </div>
+      <p class="muted" th:if="${reviews.isEmpty()}">No reviews yet. Be the first to review this product.</p>
+      <form class="card pad mt" style="max-width:640px" th:if="${canReview}" th:action="@{/product/{id}/review(id=${product.id})}" method="post">
+        <h3 style="font-size:16px;margin-bottom:10px">Write a Review</h3>
+        <div class="field"><label for="stars">Your rating</label><select name="stars" id="stars"><option value="5">★★★★★ – Excellent</option><option value="4">★★★★ – Good</option><option value="3">★★★ – Average</option><option value="2">★★ – Poor</option><option value="1">★ – Terrible</option></select></div>
+        <div class="field"><label for="body">Your review</label><textarea name="body" id="body" maxlength="1000" required placeholder="What did you like or dislike?"></textarea></div>
+        <button type="submit" class="btn btn-primary">Submit review</button>
+      </form>
+    </section>
+
+    <section class="tabpane" data-pane="shipping">
+      <h3>Shipping &amp; Returns</h3>
+      <div class="hl"><span class="ck"><svg class="icon"><use href="#i-check"/></svg></span><div><b>Delivery</b><p>Free delivery on orders of ₹499 and above (₹40 otherwise). Most orders arrive in 2-4 days depending on your pincode.</p></div></div>
+      <div class="hl"><span class="ck"><svg class="icon"><use href="#i-check"/></svg></span><div><b>7-day easy returns</b><p>Return unused items in original packaging within 7 days of delivery for a refund or replacement.</p></div></div>
+      <div class="hl"><span class="ck"><svg class="icon"><use href="#i-check"/></svg></span><div><b>Cancel before it ships</b><p>Cancel from My Orders any time before the order is shipped; refunds go back to your original payment method.</p></div></div>
+    </section>
+
+    <div class="related" th:if="${!related.isEmpty()}">
+      <div class="sect-head"><h2>You may also like</h2></div>
+      <div class="pgrid five"><th:block th:each="p : ${related}"><th:block th:replace="~{fragments/layout :: productCard(${p})}"></th:block></th:block></div>
+    </div>
+  </main>
+
+  <aside class="rail">
+    <div class="card rail-card why">
+      <h3>Why choose SriramMart?</h3>
+      <div><svg class="icon"><use href="#i-shield"/></svg><span><b>100% Original Products</b><small>Genuine brands only</small></span></div>
+      <div><svg class="icon"><use href="#i-lock"/></svg><span><b>Secure Payment</b><small>Your data is safe</small></span></div>
+      <div><svg class="icon"><use href="#i-refresh"/></svg><span><b>Easy Returns</b><small>Hassle-free returns</small></span></div>
+      <div><svg class="icon"><use href="#i-headset"/></svg><span><b>24/7 Support</b><small>We're here for you</small></span></div>
+    </div>
+    <div class="card rail-card seller-box">
+      <small class="muted">Sold by</small>
+      <div class="name" th:text="${product.seller.storeName != null} ? ${product.seller.storeName} : ${product.seller.fullName}">Store</div>
+      <div class="small" th:if="${product.seller.storeRating != null and product.seller.storeRating gt 0}"><span class="tag green" th:text="${product.seller.storeRating} + ' ★'">4.6 ★</span> <span class="muted" th:text="'(' + ${@fmt.count(product.seller.storeRatings)} + ' ratings)'">(12.4k ratings)</span></div>
+      <p><a th:href="@{/store/{id}(id=${product.seller.id})}">Visit Store →</a></p>
+      <span class="tag" th:if="${product.seller.storeRating != null and product.seller.storeRating ge 4.5}">Top Rated Seller</span>
+    </div>
+  </aside>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

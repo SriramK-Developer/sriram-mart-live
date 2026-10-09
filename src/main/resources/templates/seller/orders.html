@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-clipboard"/></svg><div><h1>Orders</h1><p>Move orders forward as you pack and ship them. Buyers are notified automatically.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Order</th><th>Date</th><th>Product</th><th>Qty</th><th>Amount</th><th>Ship to</th><th>Status</th><th>Update</th></tr></thead>
+      <tbody>
+        <tr th:each="i : ${items}">
+          <td><b th:text="${i.order.orderNo}">SM1</b></td>
+          <td th:text="${@fmt.date(i.order.createdAt)}">date</td>
+          <td><div style="display:flex;gap:10px;align-items:center"><img class="thumb" th:src="@{${i.imagePath}}" alt=""><span th:text="${i.productName}">Product</span></div></td>
+          <td th:text="${i.quantity}">1</td>
+          <td th:text="${@fmt.inr(i.lineTotal)}">₹1</td>
+          <td><span th:text="${i.order.shipCity}">City</span> <small class="muted" th:text="${i.order.shipPincode}">6</small></td>
+          <td><span class="tag" th:classappend="${i.status.name() == 'DELIVERED'} ? 'green' : (${i.status.name() == 'CANCELLED'} ? 'red' : 'orange')" th:text="${i.status.label}">Placed</span></td>
+          <td><form class="inline" th:if="${!i.status.isFinal()}" th:action="@{/seller/orders/items/{id}/status(id=${i.id})}" method="post"><select name="status" aria-label="New status"><option th:each="s : ${statuses}" th:if="${s.ordinal() gt i.status.ordinal() or s.name() == 'CANCELLED'}" th:value="${s.name()}" th:text="${s.label}">Shipped</option></select><button class="btn btn-primary btn-sm" type="submit">Save</button></form><span class="muted small" th:if="${i.status.isFinal()}">—</span></td>
+        </tr>
+      </tbody></table></div>
+    <div class="empty mt" th:if="${items.isEmpty()}"><h3>No orders yet</h3><p>Orders for your products will show up here.</p></div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

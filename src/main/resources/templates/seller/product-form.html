@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-package"/></svg><div><h1 th:text="${formTitle}">Add product</h1><p>Use clear photos on a white background. Prices are in rupees.</p></div></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <form class="card form-card" th:action="@{${formAction}}" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="id" th:value="${form.id}">
+      <div class="grid2">
+        <div class="field"><label for="name">Product name *</label><input type="text" id="name" name="name" th:value="${form.name}" maxlength="200" required></div>
+        <div class="field"><label for="brand">Brand</label><input type="text" id="brand" name="brand" th:value="${form.brand}" maxlength="80"></div>
+      </div>
+      <div class="field"><label for="subtitle">Short variant line (shown in cart)</label><input type="text" id="subtitle" name="subtitle" th:value="${form.subtitle}" maxlength="120" placeholder="e.g. 8GB RAM | 128GB Storage | Black"></div>
+      <div class="grid2">
+        <div class="field"><label for="categorySlug">Category *</label><select id="categorySlug" name="categorySlug" required><option value="">Choose…</option><option th:each="c : ${cats}" th:value="${c.slug}" th:text="${c.name}" th:selected="${form.categorySlug == c.slug}">Category</option></select></div>
+        <div class="field"><label for="subCategory">Sub-category</label><input type="text" id="subCategory" name="subCategory" th:value="${form.subCategory}" maxlength="80" placeholder="e.g. Smartphones"></div>
+      </div>
+      <div class="grid3">
+        <div class="field"><label for="price">Selling price (₹) *</label><input type="number" id="price" name="price" th:value="${form.price}" min="1" step="0.01" required></div>
+        <div class="field"><label for="mrp">MRP (₹)</label><input type="number" id="mrp" name="mrp" th:value="${form.mrp}" min="1" step="0.01"></div>
+        <div class="field"><label for="stock">Stock *</label><input type="number" id="stock" name="stock" th:value="${form.stock}" min="0" max="1000000" required></div>
+      </div>
+      <div class="field" th:if="${sellers != null and form.id == null}"><label for="sellerId">Seller *</label><select id="sellerId" name="sellerId" required><option value="">Choose seller…</option><option th:each="s : ${sellers}" th:value="${s.id}" th:text="${s.storeName != null ? s.storeName : s.fullName}">Seller</option></select></div>
+      <div class="field"><label for="description">Description</label><textarea id="description" name="description" maxlength="2000" th:text="${form.description}"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label for="highlights">Highlights <span class="muted small">(one per line: Title | text)</span></label><textarea id="highlights" name="highlights" th:text="${form.highlights}" placeholder="42 Hours Playtime | Up to 42 hours with the charging case"></textarea></div>
+        <div class="field"><label for="specs">Specifications <span class="muted small">(one per line: Name: value)</span></label><textarea id="specs" name="specs" th:text="${form.specs}" placeholder="Warranty: 1 Year"></textarea></div>
+      </div>
+      <div class="field" style="display:flex;gap:18px;align-items:center">
+        <div class="img-preview"><img id="imgPreview" th:src="${product != null} ? @{${product.imageMain}} : @{/img/no-image.svg}" alt="Preview"></div>
+        <div><label for="image">Product photo (JPG, PNG or GIF, max 5 MB)</label><input type="file" id="image" name="image" accept="image/png,image/jpeg,image/gif" data-preview="#imgPreview"></div>
+      </div>
+      <div class="field"><label class="check"><input type="hidden" name="_active" value="on"><input type="checkbox" name="active" value="true" th:checked="${form.active}"> Visible to shoppers</label></div>
+      <div style="display:flex;gap:10px"><button type="submit" class="btn btn-primary btn-lg">Save product</button><a class="btn btn-outline btn-lg" th:href="@{${backUrl}}">Cancel</a></div>
+    </form>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

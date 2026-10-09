@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="page-head"><svg class="icon lg"><use href="#i-package"/></svg><div><h1>Products</h1><p th:text="${pg.totalElements} + ' products in the catalogue'">0 products</p></div>
+      <a class="btn btn-primary" style="margin-left:auto" th:href="@{/admin/products/new}"><svg class="icon sm"><use href="#i-plus"/></svg>Add product</a></div>
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <form method="get" th:action="@{/admin/products}" class="inline mb"><input type="search" name="q" th:value="${q}" placeholder="Search by name or SKU" style="width:280px" maxlength="60"><button class="btn btn-outline" type="submit">Search</button></form>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th></th><th>Product</th><th>Seller</th><th>Price</th><th>Stock</th><th>Sold</th><th>Status</th><th></th></tr></thead><tbody>
+      <tr th:each="p : ${items}">
+        <td><img class="thumb" th:src="@{${p.imageMain}}" alt=""></td>
+        <td><a th:href="@{/product/{id}(id=${p.id})}" th:text="${p.name}">Name</a><div class="muted small" th:text="${p.category.name}">Cat</div></td>
+        <td th:text="${p.seller.storeName != null ? p.seller.storeName : p.seller.fullName}">Seller</td>
+        <td th:text="${@fmt.inr(p.price)}">₹1</td>
+        <td><form class="inline" th:action="@{/admin/products/{id}/stock(id=${p.id})}" method="post"><input type="number" name="stock" th:value="${p.stock}" min="0" max="1000000" aria-label="Stock"><button class="btn btn-outline btn-sm" type="submit">Update</button></form></td>
+        <td th:text="${p.soldCount}">0</td>
+        <td><span class="tag green" th:if="${p.active}">Live</span><span class="tag gray" th:unless="${p.active}">Hidden</span></td>
+        <td class="right"><a class="btn btn-outline btn-sm" th:href="@{/admin/products/{id}/edit(id=${p.id})}">Edit</a>
+          <form class="inline" th:action="@{/admin/products/{id}/toggle(id=${p.id})}" method="post"><input type="hidden" name="q" th:value="${q}"><button class="btn btn-sm" th:classappend="${p.active} ? 'btn-danger' : 'btn-primary'" type="submit" th:text="${p.active} ? 'Hide' : 'Show'">Hide</button></form></td>
+      </tr>
+    </tbody></table></div>
+    <div class="pager" th:if="${pg.totalPages gt 1}">
+      <a th:if="${pg.number gt 0}" th:href="@{/admin/products(q=${q},page=${pg.number - 1})}">‹</a>
+      <span class="cur" th:text="${pg.number + 1} + ' / ' + ${pg.totalPages}">1</span>
+      <a th:if="${pg.number lt pg.totalPages - 1}" th:href="@{/admin/products(q=${q},page=${pg.number + 1})}">›</a>
+    </div>
+  </main>
+</div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

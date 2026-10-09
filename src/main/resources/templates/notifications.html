@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<svg th:replace="~{fragments/layout :: icons}"></svg>
+<header th:replace="~{fragments/layout :: topbar}"></header>
+<div class="shell no-rail">
+  <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+  <main class="main">
+    <div class="card">
+      <div class="page-head pad" style="margin:0;padding-bottom:0">
+        <svg class="icon lg"><use href="#i-bell"/></svg>
+        <div><h1>Notifications</h1><p>Stay updated with your orders, offers and account activity</p></div>
+        <form th:action="@{/notifications/read-all}" method="post" style="margin-left:auto"><button type="submit" class="btn btn-outline btn-sm"><svg class="icon sm"><use href="#i-check"/></svg>Mark all as read</button></form>
+      </div>
+      <div class="note-tabs">
+        <a th:href="@{/notifications}" th:classappend="${tab == 'ALL'} ? 'on'">All <span class="count-pill" th:text="${totalCount}">12</span></a>
+        <a th:each="t : ${types}" th:href="@{/notifications(tab=${t.name()})}" th:classappend="${tab == t.name()} ? 'on'"><span th:text="${t.label}">Orders</span> <span class="count-pill" th:text="${typeCounts.get(t.name())}">5</span></a>
+      </div>
+      <div class="empty" style="border:0" th:if="${notes.isEmpty()}"><h3>Nothing here yet</h3><p>New updates will appear as soon as they happen.</p></div>
+      <div class="note" th:each="n : ${notes}" th:classappend="${!n.seen} ? 'unread'">
+        <span class="n-ico" th:classappend="${n.type.name()}"><svg class="icon"><use th:href="'#i-' + (${n.type.name() == 'ORDER'} ? 'truck' : (${n.type.name() == 'OFFER'} ? 'tag' : (${n.type.name() == 'ACCOUNT'} ? 'shield' : 'bell')))"/></svg></span>
+        <div><b th:text="${n.title}">Order update</b><p th:text="${n.message}">Message</p><a th:if="${n.link != null}" th:href="@{${n.link}}" th:text="${n.linkLabel != null} ? ${n.linkLabel} : 'Open'">View</a></div>
+        <time th:text="${@fmt.ago(n.createdAt)}">2 hours ago</time>
+      </div>
+    </div>
+  </main>
+</div>
+<div th:replace="~{fragments/layout :: chat}"></div>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
