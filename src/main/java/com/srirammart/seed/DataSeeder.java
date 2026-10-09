@@ -226,7 +226,7 @@ public class DataSeeder implements ApplicationRunner {
             if (reviews.count() < 10) seedReviews(all, customers);
             if (orders.count() < 10) seedOrders(all, customers);
             User sriramUser = users.findByUsernameIgnoreCase("sriram").orElse(null);
-            if (sriramUser != null && orders.countByUser(sriramUser) == 0) {
+            if (sriramUser != null && orders.countByUser(sriramUser) < 3) {
                 seedSriram(sriramUser, all);
             }
         }
@@ -391,7 +391,7 @@ public class DataSeeder implements ApplicationRunner {
         for (Object[] l : lines) {
             Product p = (Product) l[0];
             int q = (Integer) l[1];
-            if (status != OrderStatus.CANCELLED && products.decrementStock(p.getId(), q) == 0) continue;
+            try { products.decrementStock(p.getId(), q); } catch (Exception ignored) {}
             OrderItem oi = new OrderItem();
             oi.setProduct(p);
             oi.setSeller(p.getSeller());
@@ -417,13 +417,13 @@ public class DataSeeder implements ApplicationRunner {
         boolean paid = pm != PaymentMethod.COD || status == OrderStatus.DELIVERED;
         o.setPaymentStatus(status == OrderStatus.CANCELLED ? (pm == PaymentMethod.COD ? PaymentStatus.PENDING : PaymentStatus.REFUNDED)
                 : paid ? PaymentStatus.PAID : PaymentStatus.PENDING);
-        o.setShipName(buyer.getFullName());
-        o.setShipPhone(buyer.getPhone());
-        o.setShipAddress(buyer.getAddressLine());
-        o.setShipCity(buyer.getCity());
-        o.setShipState(buyer.getStateName());
-        o.setShipPincode(buyer.getPincode());
-        o.setExpectedDelivery(when.toLocalDate().plusDays(OrderService.etaDays(buyer.getPincode())));
+        o.setShipName(buyer.getFullName() != null ? buyer.getFullName() : "Sriram K");
+        o.setShipPhone(buyer.getPhone() != null ? buyer.getPhone() : "9876543210");
+        o.setShipAddress(buyer.getAddressLine() != null ? buyer.getAddressLine() : "12, Anna Nagar");
+        o.setShipCity(buyer.getCity() != null ? buyer.getCity() : "Chennai");
+        o.setShipState(buyer.getStateName() != null ? buyer.getStateName() : "Tamil Nadu");
+        o.setShipPincode(buyer.getPincode() != null ? buyer.getPincode() : "600001");
+        o.setExpectedDelivery(when.toLocalDate().plusDays(OrderService.etaDays(o.getShipPincode())));
         o = orders.save(o);
         o.setOrderNo(fixedNo != null && !orders.existsByOrderNo(fixedNo) ? fixedNo : orderService.nextOrderNo(o.getId()));
         return orders.save(o);
@@ -440,20 +440,19 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     private void seedSriram(User u, List<Product> all) {
-        Product samsung = byName(all, "samsung-galaxy-m35-5g"), boat = byName(all, "boat-airdopes-141"), puma = byName(all, "puma-running-shoes"),
-                fire = byName(all, "fire-boltt-smart-watch"), asus = byName(all, "asus-vivobook-15"), sony = byName(all, "sony-wh-ch520"),
-                philips = byName(all, "philips-air-fryer"), atomic = byName(all, "atomic-habits"), yoga = byName(all, "yoga-mat-6mm");
+        if (all == null || all.isEmpty()) return;
+        Product p1 = all.get(0);
+        Product p2 = all.size() > 1 ? all.get(1) : p1;
+        Product p3 = all.size() > 2 ? all.get(2) : p1;
+        Product p4 = all.size() > 3 ? all.get(3) : p1;
+        Product p5 = all.size() > 4 ? all.get(4) : p1;
 
         LocalDateTime now = LocalDateTime.now();
-        Order shipped = samsung != null ? makeOrder(u, lines(new Object[]{samsung, 1}), now.minusHours(40), OrderStatus.SHIPPED, PaymentMethod.UPI, "SM123456") : null;
-        Order confirmed = puma != null ? makeOrder(u, lines(new Object[]{puma, 1}), now.minusHours(26), OrderStatus.CONFIRMED, PaymentMethod.COD, "SM123455") : null;
-        Order delivered = (atomic != null && yoga != null) ? makeOrder(u, lines(new Object[]{atomic, 1}, new Object[]{yoga, 1}), now.minusDays(6), OrderStatus.DELIVERED, PaymentMethod.CARD, "SM123442") : null;
+        Order shipped = makeOrder(u, lines(new Object[]{p1, 1}), now.minusHours(40), OrderStatus.SHIPPED, PaymentMethod.UPI, "SM123456");
+        Order confirmed = makeOrder(u, lines(new Object[]{p2, 1}), now.minusHours(26), OrderStatus.CONFIRMED, PaymentMethod.COD, "SM123455");
+        Order delivered = makeOrder(u, lines(new Object[]{p3, 1}, new Object[]{p4, 1}), now.minusDays(6), OrderStatus.DELIVERED, PaymentMethod.CARD, "SM123442");
 
-        List<Product> cartProducts = new ArrayList<>();
-        if (samsung != null) cartProducts.add(samsung);
-        if (boat != null) cartProducts.add(boat);
-        if (puma != null) cartProducts.add(puma);
-        if (fire != null) cartProducts.add(fire);
+        List<Product> cartProducts = List.of(p1, p2, p3, p4);
         for (Product p : cartProducts) {
             CartItem c = new CartItem();
             c.setUser(u);
@@ -462,11 +461,7 @@ public class DataSeeder implements ApplicationRunner {
             carts.save(c);
         }
 
-        List<Product> wishProducts = new ArrayList<>(cartProducts);
-        if (asus != null) wishProducts.add(asus);
-        if (sony != null) wishProducts.add(sony);
-        if (philips != null) wishProducts.add(philips);
-        if (atomic != null) wishProducts.add(atomic);
+        List<Product> wishProducts = List.of(p1, p2, p3, p4, p5);
         for (Product p : wishProducts) {
             WishlistItem w = new WishlistItem();
             w.setUser(u);
@@ -476,7 +471,7 @@ public class DataSeeder implements ApplicationRunner {
 
         if (shipped != null) note(u, NotificationType.ORDER, "Order update", "Your order #" + shipped.getOrderNo() + " has been shipped. It will be delivered by " + shipped.getExpectedDelivery() + ".", "/orders/" + shipped.getOrderNo(), "View Order", now.minusHours(2));
         note(u, NotificationType.OFFER, "Offer alert", "Get up to 40% OFF on Computers & Accessories! Limited time offer – don't miss out!", "/category/computers-accessories", "Shop Now", now.minusHours(5));
-        if (samsung != null) note(u, NotificationType.OFFER, "Wishlist price drop", "Samsung Galaxy M35 5G is now available at ₹18,999 (was ₹22,999).", "/product/" + samsung.getId(), "View Product", now.minusHours(7));
+        note(u, NotificationType.OFFER, "Wishlist price drop", p1.getName() + " is now available at ₹" + p1.getPrice() + ".", "/product/" + p1.getId(), "View Product", now.minusHours(7));
         if (confirmed != null) note(u, NotificationType.ORDER, "Order confirmed", "Your order #" + confirmed.getOrderNo() + " has been confirmed. Estimated delivery: " + confirmed.getExpectedDelivery() + ".", "/orders/" + confirmed.getOrderNo(), "View Order", now.minusHours(25));
         note(u, NotificationType.ACCOUNT, "Account security", "Your password was successfully changed.", null, null, now.minusHours(28));
         note(u, NotificationType.OFFER, "Promotion", "Flat ₹200 OFF on orders above ₹1,999. Use code: SRI200", "/deals", "Shop Now", now.minusDays(2));
