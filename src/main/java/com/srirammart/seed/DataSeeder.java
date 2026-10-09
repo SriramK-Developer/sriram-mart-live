@@ -223,10 +223,10 @@ public class DataSeeder implements ApplicationRunner {
         List<User> customers = seedCustomers(buyerHash, customerHash);
         List<Product> all = products.findAll();
         if (!all.isEmpty() && !customers.isEmpty()) {
-            if (reviews.count() == 0) seedReviews(all, customers);
-            if (orders.count() == 0) seedOrders(all, customers);
+            if (reviews.count() < 10) seedReviews(all, customers);
+            if (orders.count() < 10) seedOrders(all, customers);
             User sriramUser = users.findByUsernameIgnoreCase("sriram").orElse(null);
-            if (sriramUser != null && carts.countByUser(sriramUser) == 0 && wishlists.countByUser(sriramUser) == 0) {
+            if (sriramUser != null && orders.countByUser(sriramUser) == 0) {
                 seedSriram(sriramUser, all);
             }
         }
@@ -433,8 +433,10 @@ public class DataSeeder implements ApplicationRunner {
     private static List<Object[]> lines(Object[]... ls) { return new ArrayList<>(java.util.Arrays.asList(ls)); }
 
     private Product byName(List<Product> all, String sku) {
+        if (all == null || all.isEmpty()) return null;
         for (Product p : all) if (p.getSku().equalsIgnoreCase(sku)) return p;
-        return null;
+        int idx = Math.abs(sku.hashCode()) % all.size();
+        return all.get(idx);
     }
 
     private void seedSriram(User u, List<Product> all) {
