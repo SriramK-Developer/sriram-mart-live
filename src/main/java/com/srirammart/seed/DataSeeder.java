@@ -71,13 +71,17 @@ public class DataSeeder implements ApplicationRunner {
     }
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
-        ensureAdmin();
-        if (categories.count() == 0) loadCategories();
-        if (props.isSeedDemoData() && users.countByRole(Role.SELLER) == 0) {
-            long t = System.currentTimeMillis();
-            seedDemo();
-            log.info("Demo data created in {} ms", System.currentTimeMillis() - t);
+    public void run(ApplicationArguments args) {
+        try {
+            ensureAdmin();
+            if (categories.count() == 0) loadCategories();
+            if (props.isSeedDemoData() && users.countByRole(Role.SELLER) == 0) {
+                long t = System.currentTimeMillis();
+                seedDemo();
+                log.info("Demo data created in {} ms", System.currentTimeMillis() - t);
+            }
+        } catch (Exception e) {
+            log.error("DataSeeder encountered an error, continuing app startup: {}", e.getMessage(), e);
         }
     }
 
@@ -94,14 +98,26 @@ public class DataSeeder implements ApplicationRunner {
         log.info("Admin account '{}' created", a.getUsername());
     }
 
-    private List<Map<String, String>> csv(String name) throws Exception {
-        try (Reader r = new InputStreamReader(new ClassPathResource("data/" + name).getInputStream(), StandardCharsets.UTF_8)) {
-            return CsvParser.readMaps(r);
+    private List<Map<String, String>> csv(String name) {
+        try {
+            ClassPathResource res = new ClassPathResource("data/" + name);
+            if (res.exists()) {
+                try (Reader r = new InputStreamReader(res.getInputStream(), StandardCharsets.UTF_8)) {
+                    return CsvParser.readMaps(r);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not read classpath resource data/{}: {}", name, e.getMessage());
         }
+        return java.util.Collections.emptyList();
     }
 
-    private void loadCategories() throws Exception {
-        for (Map<String, String> r : csv("categories.csv")) {
+    private void loadCategories() {
+        List<Map<String, String>> rows = csv("categories.csv");
+        if (rows.isEmpty()) {
+            rows = defaultCategories();
+        }
+        for (Map<String, String> r : rows) {
             Category c = new Category();
             c.setSlug(r.get("slug"));
             c.setName(r.get("name"));
@@ -116,6 +132,27 @@ public class DataSeeder implements ApplicationRunner {
         }
     }
 
+    private List<Map<String, String>> defaultCategories() {
+        List<Map<String, String>> list = new ArrayList<>();
+        list.add(catMap("mobiles-tablets", "Mobiles & Tablets", "smartphone", "RAM,Storage,Brand", "5000,10000,20000,40000,80000", "Latest smartphones and tablets with unbeatable offers", "Mobiles & Tablets", "Smartphones & Tablets", "Discover top flagship and budget devices."));
+        list.add(catMap("computers-accessories", "Computers & Accessories", "laptop", "RAM,Storage,Processor", "15000,30000,50000,80000,120000", "High-performance laptops desktops and peripherals", "Computers & Tech", "Laptops & Accessories", "Power your productivity and gaming."));
+        list.add(catMap("fashion", "Fashion", "shirt", "Size,Color,Gender", "499,999,1999,3999,7999", "Trending apparel footwear and accessories", "Fashion & Apparel", "Men & Women Fashion", "Upgrade your style with top brands."));
+        list.add(catMap("home-living", "Home & Living", "home", "Room,Material,Type", "499,1499,4999,14999,29999", "Modern appliances decor and kitchen essentials", "Home Essentials", "Home & Kitchen Living", "Make your living spaces cozy and stylish."));
+        list.add(catMap("beauty-personal-care", "Beauty & Personal Care", "sparkles", "Skin Type,Form,Gender", "199,499,999,1999,4999", "Skincare cosmetics hair care and wellness", "Personal Care", "Beauty & Grooming", "Daily grooming and luxury skincare."));
+        list.add(catMap("sports-fitness", "Sports & Fitness", "activity", "Activity,Type", "499,999,2499,4999,9999", "Gym equipment fitness gear and outdoor sports", "Fitness & Outdoor", "Sports & Fitness", "Gear up for your fitness goals."));
+        list.add(catMap("books", "Books", "book", "Language,Binding,Genre", "199,399,799,1499,2999", "Bestsellers fiction non-fiction and academics", "Bookstore", "Bestsellers & Classics", "Expand your mind with great reads."));
+        list.add(catMap("toys-games", "Toys & Games", "gift", "Age Group,Type", "299,699,1499,2999,5999", "Action figures board games puzzles and crafts", "Kids & Toys", "Toys & Family Games", "Endless fun and learning for kids."));
+        list.add(catMap("groceries", "Groceries", "shopping-bag", "Type,Pack Size", "99,249,499,999,1999", "Daily essentials dairy snacks and pantry staples", "Daily Essentials", "Supermarket Groceries", "Fresh staples delivered to your door."));
+        return list;
+    }
+
+    private Map<String, String> catMap(String slug, String name, String icon, String facets, String steps, String tag, String eye, String title, String sub) {
+        Map<String, String> m = new HashMap<>();
+        m.put("slug", slug); m.put("name", name); m.put("icon", icon); m.put("facets", facets);
+        m.put("priceSteps", steps); m.put("tagline", tag); m.put("eyebrow", eye); m.put("title", title); m.put("subline", sub);
+        return m;
+    }
+
     // ------------------------------------------------------------------------------------------ demo data
     private void seedDemo() throws Exception {
         String sellerHash = encoder.encode(SELLER_PASSWORD);
@@ -124,7 +161,18 @@ public class DataSeeder implements ApplicationRunner {
 
         // sellers
         Map<String, String> sellerUsername = new HashMap<>();
-        for (Map<String, String> r : csv("sellers.csv")) {
+        List<Map<String, String>> sellerRows = csv("sellers.csv");
+        if (sellerRows.isEmpty()) {
+            sellerRows = List.of(
+                Map.of("username", "techhub", "key", "techhub", "store", "TechHub Electronics", "rating", "4.8", "ratings", "1420"),
+                Map.of("username", "stylestudio", "key", "stylestudio", "store", "StyleStudio Fashion", "rating", "4.6", "ratings", "980"),
+                Map.of("username", "homeplus", "key", "homeplus", "store", "HomePlus Living", "rating", "4.7", "ratings", "650"),
+                Map.of("username", "bookworld", "key", "bookworld", "store", "BookWorld Official", "rating", "4.9", "ratings", "2100"),
+                Map.of("username", "sportify", "key", "sportify", "store", "Sportify Pro Gear", "rating", "4.7", "ratings", "820"),
+                Map.of("username", "freshkart", "key", "freshkart", "store", "FreshKart Groceries", "rating", "4.6", "ratings", "540")
+            );
+        }
+        for (Map<String, String> r : sellerRows) {
             User s = new User();
             s.setUsername(r.get("username"));
             s.setEmail(r.get("username") + "@srirammart.local");
@@ -152,17 +200,21 @@ public class DataSeeder implements ApplicationRunner {
 
         // catalogue
         List<Map<String, String>> rows = csv("products.csv");
-        for (Map<String, String> r : rows) r.put("seller", sellerUsername.getOrDefault(r.get("seller"), r.get("seller")));
-        ProductService.ImportResult imp = productService.importRows(rows);
-        log.info("Catalogue: {} products created, {} errors", imp.getCreated(), imp.getErrors().size());
-        imp.getErrors().forEach(e -> log.warn("Import: {}", e));
+        if (!rows.isEmpty()) {
+            for (Map<String, String> r : rows) r.put("seller", sellerUsername.getOrDefault(r.get("seller"), r.get("seller")));
+            ProductService.ImportResult imp = productService.importRows(rows);
+            log.info("Catalogue: {} products created, {} errors", imp.getCreated(), imp.getErrors().size());
+            imp.getErrors().forEach(e -> log.warn("Import: {}", e));
+        }
 
         seedCoupons();
         List<User> customers = seedCustomers(buyerHash, customerHash);
         List<Product> all = products.findAll();
-        seedReviews(all, customers);
-        seedOrders(all, customers);
-        seedSriram(customers.get(0), all);
+        if (!all.isEmpty() && !customers.isEmpty()) {
+            seedReviews(all, customers);
+            seedOrders(all, customers);
+            seedSriram(customers.get(0), all);
+        }
     }
 
     private void seedCoupons() {
