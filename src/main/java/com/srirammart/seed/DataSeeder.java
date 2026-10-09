@@ -209,7 +209,7 @@ public class DataSeeder implements ApplicationRunner {
         }
 
         // catalogue
-        if (products.count() == 0) {
+        if (products.count() < 2500) {
             List<Map<String, String>> rows = csv("products.csv");
             if (!rows.isEmpty()) {
                 for (Map<String, String> r : rows) r.put("seller", sellerUsername.getOrDefault(r.get("seller"), r.get("seller")));
