@@ -74,11 +74,12 @@ public class DataSeeder implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         try {
             ensureAdmin();
-            if (categories.count() == 0) loadCategories();
-            if (props.isSeedDemoData() && users.countByRole(Role.SELLER) == 0) {
-                long t = System.currentTimeMillis();
+            if (categories.count() == 0) {
+                loadCategories();
+                log.info("Categories initialized ({} categories)", categories.count());
+            }
+            if (props.isSeedDemoData()) {
                 seedDemo();
-                log.info("Demo data created in {} ms", System.currentTimeMillis() - t);
             }
         } catch (Exception e) {
             log.error("DataSeeder encountered an error, continuing app startup: {}", e.getMessage(), e);
@@ -103,7 +104,8 @@ public class DataSeeder implements ApplicationRunner {
             ClassPathResource res = new ClassPathResource("data/" + name);
             if (res.exists()) {
                 try (Reader r = new InputStreamReader(res.getInputStream(), StandardCharsets.UTF_8)) {
-                    return CsvParser.readMaps(r);
+                    List<Map<String, String>> rows = CsvParser.readMaps(r);
+                    if (!rows.isEmpty()) return rows;
                 }
             }
         } catch (Exception e) {
@@ -118,17 +120,20 @@ public class DataSeeder implements ApplicationRunner {
             rows = defaultCategories();
         }
         for (Map<String, String> r : rows) {
-            Category c = new Category();
-            c.setSlug(r.get("slug"));
-            c.setName(r.get("name"));
-            c.setIcon(r.get("icon"));
-            c.setFacets(r.get("facets"));
-            c.setPriceSteps(r.get("priceSteps"));
-            c.setTagline(r.get("tagline"));
-            c.setEyebrow(r.get("eyebrow"));
-            c.setTitle(r.get("title"));
-            c.setSubline(r.get("subline"));
-            categories.save(c);
+            String slug = r.get("slug");
+            if (categories.findBySlug(slug).isEmpty()) {
+                Category c = new Category();
+                c.setSlug(slug);
+                c.setName(r.get("name"));
+                c.setIcon(r.get("icon"));
+                c.setFacets(r.get("facets"));
+                c.setPriceSteps(r.get("priceSteps"));
+                c.setTagline(r.get("tagline"));
+                c.setEyebrow(r.get("eyebrow"));
+                c.setTitle(r.get("title"));
+                c.setSubline(r.get("subline"));
+                categories.save(c);
+            }
         }
     }
 
@@ -173,47 +178,57 @@ public class DataSeeder implements ApplicationRunner {
             );
         }
         for (Map<String, String> r : sellerRows) {
-            User s = new User();
-            s.setUsername(r.get("username"));
-            s.setEmail(r.get("username") + "@srirammart.local");
-            s.setFullName(r.get("store"));
-            s.setStoreName(r.get("store"));
-            s.setStoreRating(Double.parseDouble(r.get("rating")));
-            s.setStoreRatings(Integer.parseInt(r.get("ratings")));
-            s.setRole(Role.SELLER);
-            s.setPasswordHash(sellerHash);
-            s.setPhone("98" + (10000000 + rnd.nextInt(89999999)));
-            users.save(s);
-            sellerUsername.put(r.get("key"), r.get("username"));
+            String uname = r.get("username");
+            if (users.findByUsernameIgnoreCase(uname).isEmpty()) {
+                User s = new User();
+                s.setUsername(uname);
+                s.setEmail(uname + "@srirammart.local");
+                s.setFullName(r.get("store"));
+                s.setStoreName(r.get("store"));
+                s.setStoreRating(Double.parseDouble(r.get("rating")));
+                s.setStoreRatings(Integer.parseInt(r.get("ratings")));
+                s.setRole(Role.SELLER);
+                s.setPasswordHash(sellerHash);
+                s.setPhone("98" + (10000000 + rnd.nextInt(89999999)));
+                users.save(s);
+            }
+            sellerUsername.put(r.get("key"), uname);
         }
-        User pending = new User();
-        pending.setUsername("gadgetzone");
-        pending.setEmail("gadgetzone@srirammart.local");
-        pending.setFullName("GadgetZone Traders");
-        pending.setStoreName("GadgetZone Traders");
-        pending.setRole(Role.SELLER);
-        pending.setApproved(false);
-        pending.setStoreRating(0.0);
-        pending.setStoreRatings(0);
-        pending.setPasswordHash(sellerHash);
-        users.save(pending);
+        if (users.findByUsernameIgnoreCase("gadgetzone").isEmpty()) {
+            User pending = new User();
+            pending.setUsername("gadgetzone");
+            pending.setEmail("gadgetzone@srirammart.local");
+            pending.setFullName("GadgetZone Traders");
+            pending.setStoreName("GadgetZone Traders");
+            pending.setRole(Role.SELLER);
+            pending.setApproved(false);
+            pending.setStoreRating(0.0);
+            pending.setStoreRatings(0);
+            pending.setPasswordHash(sellerHash);
+            users.save(pending);
+        }
 
         // catalogue
-        List<Map<String, String>> rows = csv("products.csv");
-        if (!rows.isEmpty()) {
-            for (Map<String, String> r : rows) r.put("seller", sellerUsername.getOrDefault(r.get("seller"), r.get("seller")));
-            ProductService.ImportResult imp = productService.importRows(rows);
-            log.info("Catalogue: {} products created, {} errors", imp.getCreated(), imp.getErrors().size());
-            imp.getErrors().forEach(e -> log.warn("Import: {}", e));
+        if (products.count() == 0) {
+            List<Map<String, String>> rows = csv("products.csv");
+            if (!rows.isEmpty()) {
+                for (Map<String, String> r : rows) r.put("seller", sellerUsername.getOrDefault(r.get("seller"), r.get("seller")));
+                ProductService.ImportResult imp = productService.importRows(rows);
+                log.info("Catalogue: {} products created, {} errors", imp.getCreated(), imp.getErrors().size());
+                imp.getErrors().forEach(e -> log.warn("Import: {}", e));
+            }
         }
 
-        seedCoupons();
+        if (coupons.count() == 0) seedCoupons();
         List<User> customers = seedCustomers(buyerHash, customerHash);
         List<Product> all = products.findAll();
         if (!all.isEmpty() && !customers.isEmpty()) {
-            seedReviews(all, customers);
-            seedOrders(all, customers);
-            seedSriram(customers.get(0), all);
+            if (reviews.count() == 0) seedReviews(all, customers);
+            if (orders.count() == 0) seedOrders(all, customers);
+            User sriramUser = users.findByUsernameIgnoreCase("sriram").orElse(null);
+            if (sriramUser != null && carts.countByUser(sriramUser) == 0 && wishlists.countByUser(sriramUser) == 0) {
+                seedSriram(sriramUser, all);
+            }
         }
     }
 
@@ -248,37 +263,45 @@ public class DataSeeder implements ApplicationRunner {
 
     private List<User> seedCustomers(String buyerHash, String customerHash) {
         List<User> out = new ArrayList<>();
-        User s = new User();
-        s.setUsername("sriram");
-        s.setEmail("sriram@srirammart.local");
-        s.setFullName("Sriram K");
-        s.setPhone("9876543210");
-        s.setPasswordHash(buyerHash);
-        s.setAddressLine("12, Gandhi Street, Anna Nagar");
-        s.setCity("Chennai");
-        s.setStateName("Tamil Nadu");
-        s.setPincode("600001");
-        out.add(users.save(s));
-        java.util.Set<String> used = new java.util.HashSet<>(List.of("sriram"));
-        for (int i = 0; i < 60; i++) {
-            String f = FIRST[rnd.nextInt(FIRST.length)], l = LAST[rnd.nextInt(LAST.length)];
-            String uname = (f + "." + l).toLowerCase();
-            int n = 1;
-            String candidate = uname;
-            while (!used.add(candidate)) candidate = uname + (++n);
-            String[] place = PLACES[rnd.nextInt(PLACES.length)];
-            User u = new User();
-            u.setUsername(candidate);
-            u.setEmail(candidate + "@example.com");
-            u.setFullName(f + " " + l);
-            u.setPhone("9" + (100000000 + rnd.nextInt(899999999)));
-            u.setPasswordHash(customerHash);
-            u.setAddressLine((1 + rnd.nextInt(180)) + ", " + LAST[rnd.nextInt(LAST.length)] + " Nagar, Main Road");
-            u.setCity(place[0]);
-            u.setStateName(place[1]);
-            u.setPincode(place[2]);
-            u.setCreatedAt(LocalDateTime.now().minusDays(20 + rnd.nextInt(300)));
-            out.add(users.save(u));
+        User s = users.findByUsernameIgnoreCase("sriram").orElse(null);
+        if (s == null) {
+            s = new User();
+            s.setUsername("sriram");
+            s.setEmail("sriram@srirammart.local");
+            s.setFullName("Sriram K");
+            s.setPhone("9876543210");
+            s.setPasswordHash(buyerHash);
+            s.setAddressLine("12, Gandhi Street, Anna Nagar");
+            s.setCity("Chennai");
+            s.setStateName("Tamil Nadu");
+            s.setPincode("600001");
+            s = users.save(s);
+        }
+        out.add(s);
+        if (users.countByRole(Role.BUYER) <= 1) {
+            java.util.Set<String> used = new java.util.HashSet<>(List.of("sriram"));
+            for (int i = 0; i < 60; i++) {
+                String f = FIRST[rnd.nextInt(FIRST.length)], l = LAST[rnd.nextInt(LAST.length)];
+                String uname = (f + "." + l).toLowerCase();
+                int n = 1;
+                String candidate = uname;
+                while (!used.add(candidate)) candidate = uname + (++n);
+                String[] place = PLACES[rnd.nextInt(PLACES.length)];
+                User u = new User();
+                u.setUsername(candidate);
+                u.setEmail(candidate + "@example.com");
+                u.setFullName(f + " " + l);
+                u.setPhone("9" + (100000000 + rnd.nextInt(899999999)));
+                u.setPasswordHash(customerHash);
+                u.setAddressLine((1 + rnd.nextInt(180)) + ", " + LAST[rnd.nextInt(LAST.length)] + " Nagar, Main Road");
+                u.setCity(place[0]);
+                u.setStateName(place[1]);
+                u.setPincode(place[2]);
+                u.setCreatedAt(LocalDateTime.now().minusDays(20 + rnd.nextInt(300)));
+                out.add(users.save(u));
+            }
+        } else {
+            out.addAll(users.findByRoleOrderByCreatedAtDesc(Role.BUYER));
         }
         return out;
     }
